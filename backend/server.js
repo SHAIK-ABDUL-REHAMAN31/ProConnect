@@ -20,8 +20,10 @@ const start = async () => {
     await mongoose.connect(
       "mongodb+srv://mrabbu985_db_user:A7W57zD5FHaYdf94@linkedin-clone.qt5fpjt.mongodb.net/?appName=LinkedIn-clone"
     );
-    app.listen(3030, () => {
-      console.log(`app is listening on port 3030`);
+    const PORT = process.env.PORT || 3030;
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
     console.error("MongoDB connection error:", error);
