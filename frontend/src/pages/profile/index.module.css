@@ -248,6 +248,12 @@
   max-height: 20rem;
   transition: "height 0.2s ease";
 }
+.BioClass {
+  font-size: "0.9rem";
+  color: "#666";
+  text-align: "left";
+}
+
 @media (max-width: 600px) {
   .profileContainer_details textarea {
     min-height: 10rem;
@@ -259,6 +265,7 @@
     display: none;
   }
 }
+
 .AddWorkButton {
   color: #135797;
   border: 3px dotted silver;

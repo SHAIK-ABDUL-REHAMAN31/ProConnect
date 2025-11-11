@@ -151,9 +151,9 @@ export default function ProfilePage() {
                     className={styles.nameEdit}
                     value={userId?.name}
                   />
-                  <p>@{userId?.username}</p>
                 </div>
-                <div>
+                <div className={styles.bioText}>
+                  <p>@{userId?.username}</p>
                   <textarea
                     value={bio}
                     onChange={(e) => {
@@ -164,15 +164,7 @@ export default function ProfilePage() {
                     maxLength={220}
                     placeholder="Write something about yourself..."
                   />
-                  <p
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#666",
-                      textAlign: "left",
-                    }}
-                  >
-                    {bio.length}/220
-                  </p>
+                  <p className={styles.BioClass}>{bio.length}/220</p>
                 </div>
               </div>
 
