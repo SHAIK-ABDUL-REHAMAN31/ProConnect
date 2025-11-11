@@ -150,24 +150,23 @@
 @media (max-width: 470px) {
   .CreatePostConatiner {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 0.8rem;
     padding: 1rem;
-    border-radius: 12px;
-    width: 100%;
-    background: rgba(240, 229, 217, 0.984);
+    height: auto;
+    border-radius: 15px;
   }
 
   .CreatePostConatiner_image {
-    display: none;
+    width: 40px;
+    height: 40px;
   }
 
   .textAreaOfContent {
     width: 100%;
-    min-height: 4.5rem;
-    font-size: 0.9rem;
+    height: 5rem;
     padding: 0.8rem;
-    border-radius: 10px;
+    font-size: 0.9rem;
   }
 
   .Fab {
@@ -177,7 +176,7 @@
 
   #svgImages {
     position: absolute;
-    left: 13%;
+    left: 18%;
     bottom: 9.25%;
     cursor: pointer;
     align-self: flex-end;
