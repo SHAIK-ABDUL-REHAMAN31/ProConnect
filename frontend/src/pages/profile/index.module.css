@@ -1,0 +1,453 @@
+.container {
+  padding: 1.3rem;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+.backDropContainer {
+  width: 100%;
+  height: 30vh;
+  background: url("https://images.pexels.com/photos/733852/pexels-photo-733852.jpeg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+  border-radius: 20px;
+}
+.backDropContainer img {
+  position: absolute;
+  border-radius: 50%;
+  bottom: -30%;
+  object-fit: cover;
+  left: 10%;
+  width: 10em; /* scales with viewport width */
+  height: 10em;
+  max-width: 10rem;
+  text-align: center;
+}
+.profileContainer_details {
+  padding-top: 6.6rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.postCard_profileContainer {
+  display: flex;
+}
+.postCard_profileContainer > img {
+  width: 3.4rem;
+  height: 3.4rem;
+  object-fit: cover;
+}
+.ConnectionButton {
+  background-color: #007bff;
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-weight: 500;
+  border: none;
+}
+
+.ConnectionButton:hover {
+  background-color: #0056b3;
+}
+.ConnectedButton {
+  background-color: #e7e7e7;
+  color: rgb(6, 6, 214);
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-weight: 500;
+  border: 2px solid rgb(30, 140, 231);
+}
+
+.WorkHistory {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.heading {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #000000;
+  text-align: center;
+}
+
+.WorkHistoryContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.WorkHistoryCard {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  color: #fff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.WorkHistoryCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: 15px;
+  background: linear-gradient(
+    40deg,
+    rgba(255, 255, 255, 0.15),
+    rgba(0, 0, 0, 0.1)
+  );
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.WorkHistoryCard:hover::before {
+  opacity: 0.4;
+}
+
+.WorkHistoryCard:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  border: 0.5px solid gray;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  z-index: 1;
+  position: relative;
+}
+
+.cardHeader h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: black;
+}
+
+.years {
+  font-size: 0.9rem;
+  color: #010101;
+}
+
+.position {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  z-index: 1;
+  position: relative;
+  color: black;
+}
+
+@media (max-width: 768px) {
+  .WorkHistoryContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .WorkHistoryCard {
+    padding: 1.2rem;
+  }
+
+  .heading {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .postCard {
+    display: none;
+  }
+}
+
+.backDropContainer_profilOverLay {
+  position: absolute;
+  bottom: -30%;
+  left: 10%;
+  width: 10em;
+  height: 10em;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 4;
+}
+
+.backDropContainer_profilOverLay:hover {
+  opacity: 1;
+}
+.profileContainer_details input {
+  outline: none;
+  border-style: none;
+  width: fit-content;
+  padding-block: 10px;
+}
+.nameEdit {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.acceptButton {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+  /* box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25); */
+  align-self: center;
+  width: fit-content;
+}
+
+.acceptButton:hover {
+  background: linear-gradient(135deg, #0056b3, #00408f);
+  /* box-shadow: 0 0 15px rgba(0, 123, 255, 0.6); */
+}
+
+.acceptButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3);
+}
+.profileContainer_details textarea {
+  outline: none;
+  border: none;
+  padding-block: 10px;
+  font-family: "Poppins", sans-serif !important;
+  font-size: 1.2rem;
+  resize: none;
+  width: 100%;
+  min-height: 9rem;
+  max-height: 20rem;
+  transition: "height 0.2s ease";
+}
+@media (max-width: 600px) {
+  .profileContainer_details textarea {
+    min-height: 10rem;
+    max-height: 15rem;
+    font-size: 1rem;
+    width: 100%;
+  }
+  .profileRecentActivity {
+    display: none;
+  }
+}
+.AddWorkButton {
+  color: #135797;
+  border: 3px dotted silver;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+  align-self: center;
+  width: fit-content;
+}
+.workHistoryTag_btn {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding-inline: 10px;
+  padding-block: 10px;
+}
+.CommentsContainer {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0%;
+  left: 0%;
+  background: rgb(0, 0, 0, 0.7);
+  overflow: hidden;
+  z-index: 2;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  z-index: 5;
+}
+
+.allCommentsContainer {
+  height: fit-content;
+  width: 40%;
+  position: relative;
+  border-radius: 10px;
+  padding: 1.4rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  gap: 1rem;
+}
+.inputField {
+  border-radius: 10px;
+  padding-inline: 1.2rem;
+  outline: none;
+  padding-block: 0.8rem;
+  border: 1px solid silver;
+  width: 100%;
+  transition: 0.2s;
+}
+.inputField:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+.postCommmentContainer_postBtn {
+  background-color: #007bff;
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  font-weight: 500;
+  width: fit-content;
+  border: none;
+}
+
+.postCommmentContainer_postBtn:hover {
+  background-color: #0056b3;
+}
+
+.singlecard {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding-bottom: 1rem;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+.singlecard:hover {
+  transform: translateY(-2px);
+}
+.singlecard_profileContainer {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.2rem;
+  gap: 1.3rem;
+  justify-content: center;
+}
+.singlecard_profileContainer > img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.singlecardImage {
+  width: 100%;
+  height: fit-content;
+  overflow: hidden;
+  padding-top: 0.6rem;
+  border-radius: 10px;
+  padding: 3rem;
+}
+.singlecardImage > img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 20px;
+}
+.singlecardImage > p {
+  padding: 0.5rem 1rem;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  max-width: 80%;
+}
+.PostsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.body_deletebtn {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+.icon:hover {
+  transform: scale(1.15);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .CreatePostConatiner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem;
+    height: auto;
+    border-radius: 15px;
+  }
+
+  .CreatePostConatiner_image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .textAreaOfContent {
+    width: 100%;
+    height: 5rem;
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .Fab {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  #svgImages {
+    position: absolute;
+    left: 13%;
+    bottom: 9.25%;
+    cursor: pointer;
+    align-self: flex-end;
+  }
+  .CreatePostConatiner_image {
+    display: none;
+  }
+}

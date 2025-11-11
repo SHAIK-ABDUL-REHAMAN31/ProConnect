@@ -1,0 +1,101 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  background: snow;
+}
+
+.cardContainer {
+  display: flex;
+  height: 80vh;
+  width: 80vw;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 10px 10px 15px rgb(173, 173, 173);
+  overflow: hidden;
+}
+
+.cardContainer_left {
+  flex: 0.6;
+  padding: 2rem;
+  text-align: center;
+}
+
+.inputField {
+  border-radius: 10px;
+  padding-inline: 1.2rem;
+  outline: none;
+  padding-block: 0.8rem;
+  border: 1px solid silver;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.inputField:hover {
+  border: 1px solid black;
+}
+.inputField:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+.inputRow1 {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.inputRow1:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.inputContainers {
+  display: flex;
+  flex-direction: column;
+  padding-top: 1.2rem;
+  max-width: 400px;
+  margin: 0 auto;
+  gap: 1.2rem;
+}
+
+.submitButton > p {
+  background: rgb(74, 139, 214);
+  width: 100%;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: aliceblue;
+  font-weight: bold;
+  background: linear-gradient(90deg, #202c92 0%, #1cb5e0 100%);
+  cursor: pointer;
+}
+.submitButton :hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  scale: calc(1.01);
+}
+
+.cardLeftHeading {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.cardContainer_right {
+  flex: 0.4;
+  background: linear-gradient(90deg, #0072ff, #1f7eebe9);
+
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+@media only screen and (max-width: 600px) {
+  .cardContainer {
+    flex-direction: column;
+  }
+}

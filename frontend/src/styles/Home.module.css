@@ -1,0 +1,238 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: "Poppins", sans-serif;
+  color: #222;
+}
+
+.heroSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-block: 4rem;
+  padding-inline: 4rem;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #f9f9ff, #fef6f6);
+}
+
+.heroLeft {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+.heroLeft h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  background: linear-gradient(90deg, #202c92 0%, #1cb5e0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroLeft h1 span {
+  color: #007bff;
+}
+
+.heroLeft p {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.joinButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 8rem;
+  height: 2.5rem;
+  background-color: #0a66c2;
+  color: white;
+  border-radius: 2rem;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg, #202c92 0%, #1cb5e0 100%);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.joinButton:hover {
+  background-color: #005fcc;
+  transform: scale(1.05);
+}
+
+.heroRight {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.heroImage {
+  width: 100%;
+  max-width: 420px;
+  object-fit: contain;
+}
+
+.featuresSection {
+  text-align: center;
+  padding: 4rem 8%;
+  background-color: #f9fbfd;
+}
+
+.featuresSection h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.cardContainer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  width: 270px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(128, 128, 128, 0.274);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card img {
+  width: 100%;
+  height: 40%px;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.communitySection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 8%;
+  flex-wrap: wrap;
+  background: #fdfdfd;
+}
+
+.communityText {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.communityText h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.communityText p {
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.exploreButton {
+  background: none;
+  color: rgb(0, 0, 0);
+  border: 1px solid rgb(34, 144, 235);
+  padding: 0.8rem 1.6rem;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.exploreButton:hover {
+  background: #1082ed;
+  color: #f9f9ff;
+  transform: scale(1.05);
+}
+
+.communityImages {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.communityImages img {
+  width: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.communityImages img:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .heroSection {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .heroLeft {
+    max-width: 100%;
+  }
+
+  .heroRight {
+    margin-bottom: 2rem;
+  }
+
+  .communitySection {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .communityImages {
+    justify-content: center;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroLeft h1 {
+    font-size: 2rem;
+    text-align: start;
+  }
+  .heroLeft p {
+    text-align: start;
+  }
+
+  .featuresSection h2 {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    width: 90%;
+  }
+
+  .communityText h2 {
+    font-size: 1.6rem;
+  }
+}

@@ -1,0 +1,394 @@
+.scrollComponent {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* .Fab > svg {
+  width: 1.8rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+  position: absolute;
+  top: 10%;
+}
+.Fab > svg:hover {
+  transform: scale(1.05);
+  background-color: rgba(206, 205, 205, 0.747);
+} */
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.CreatePostConatiner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  background: #fff7f7;
+  border-radius: 20px;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 0.1px solid rgba(128, 128, 128, 0.651);
+  transition: all 0.3s ease;
+}
+
+.CreatePostConatiner:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile image */
+.CreatePostConatiner_image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Text area */
+.textAreaOfContent {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.95rem;
+  width: 70%;
+  height: 3.5rem;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 0.8rem 1rem;
+  resize: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.textAreaOfContent:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Upload and Post buttons */
+.Fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f1f1;
+  border-radius: 50%;
+  width: 2.2rem;
+  height: 2.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.Fab:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Send icon positioning */
+#svgImages {
+  position: absolute;
+  right: 8%;
+
+  cursor: pointer;
+}
+.icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+.icon:hover {
+  transform: scale(1.15);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .CreatePostConatiner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem;
+    height: auto;
+    border-radius: 15px;
+  }
+
+  .CreatePostConatiner_image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .textAreaOfContent {
+    width: 100%;
+    height: 5rem;
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .Fab {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  #svgImages {
+    position: absolute;
+    left: 13%;
+    bottom: 9.25%;
+    cursor: pointer;
+    align-self: flex-end;
+  }
+  .CreatePostConatiner_image {
+    display: none;
+  }
+}
+
+.singlecard {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding-bottom: 1rem;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+
+.singlecard:hover {
+  transform: translateY(-2px);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  max-width: 80%;
+}
+
+.singlecard_profileContainer {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.2rem;
+  gap: 1.3rem;
+  padding-right: 3.4rem;
+}
+.singlecard_profileContainer > img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.singlecardImage {
+  width: 100%;
+  height: fit-content;
+  overflow: hidden;
+  padding-top: 0.6rem;
+}
+.singlecardImage > img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.optionsContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  color: #555;
+}
+.SingleOptionContainer {
+  /* display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center; */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s;
+  justify-content: center;
+}
+.SingleOptionContainer > svg {
+  height: 100%;
+  width: 10%;
+  cursor: pointer;
+  min-width: 1rem;
+}
+.SingleOptionContainer > svg:hover {
+  color: #007bff;
+}
+
+.CommentsContainer {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0%;
+  left: 0%;
+  background: rgb(0, 0, 0, 0.7);
+  overflow: hidden;
+  z-index: 2;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.allCommentsContainer {
+  height: 80vh;
+  width: 40%;
+  position: relative;
+  border-radius: 10px;
+  padding: 1.4rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.postCommmentContainer {
+  display: flex;
+  position: absolute;
+  bottom: 1.2rem;
+  left: 1.3rem;
+  width: 90%;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  z-index: 2;
+}
+
+.postCommmentContainer input {
+  flex: 0.9;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: 0.2s;
+}
+.postCommmentContainer input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+.postCommmentContainer_postBtn {
+  background-color: #007bff;
+  flex: 0.1;
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  font-weight: 500;
+}
+
+.postCommmentContainer_postBtn:hover {
+  background-color: #0056b3;
+}
+
+.UserPostedComment_Container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 0.5rem;
+  border-bottom: 1px solid #efefef;
+  transition: background 0.2s;
+  overflow: hidden;
+}
+
+.UserPostedComment_Container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  background: #f9f9f9;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.UserPostedComment_Container:hover {
+  background: #f1f1f1;
+}
+
+/* Profile section */
+.UserPostedComment_Profile_Container {
+  flex-shrink: 0;
+}
+
+.UserPostedComment_Profile_image {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #007bff;
+}
+
+/* User data section */
+.UserPostedComment_UserDataContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.UserPostedComment_UserDataContainer p:first-child {
+  font-weight: 600;
+  color: #007bff;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.UserPostedComment_UserDataContainer p:last-child {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.mainUserPostedConatiner {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 1rem;
+  scrollbar-width: thin;
+}
+
+.mainUserPostedConatiner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mainUserPostedConatiner::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+/* media Queries */
+
+/* @media (max-width: 768px) {
+  .wrapper {
+    width: 90%;
+  }
+
+  .CreatePostConatiner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .CreatePostConatiner_image {
+    width: 40px;
+    height: 40px;
+  }
+} */
+
+@media screen and (max-width: 600px) {
+  .allCommentsContainer {
+    height: 60vh;
+    width: 80vw;
+  }
+}

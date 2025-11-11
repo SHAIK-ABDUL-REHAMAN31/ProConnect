@@ -1,0 +1,30 @@
+.userCardContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.userCard {
+  display: flex;
+  gap: 1.2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 80%;
+  padding: 1rem 2rem;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+  border: 1px solid rgb(122, 122, 122);
+}
+.userCard_img {
+  width: 45px;
+  height: 45px;
+  max-height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.userCard:hover {
+  transform: scale(1.005);
+  border: 1px solid black;
+}
