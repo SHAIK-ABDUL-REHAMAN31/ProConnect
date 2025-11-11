@@ -115,6 +115,11 @@ export default function DashBoardComponent() {
                     <div key={post._id} className={styles.singlecard}>
                       <div className={styles.singlecard_profileContainer}>
                         <img
+                          onClick={() => {
+                            router.push(
+                              `/view_profile/${post.userId.username}`
+                            );
+                          }}
                           src={`${BASE_URL}/${post.userId.profilePicture}`}
                         />
                         <div>

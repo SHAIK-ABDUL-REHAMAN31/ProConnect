@@ -158,6 +158,60 @@
   position: relative;
   color: black;
 }
+@media (max-width: 480px) {
+  .backDropContainer {
+    height: 22vh; /* smaller backdrop for mobile */
+    border-radius: 12px;
+    background-position: center;
+  }
+
+  .backDropContainer img {
+    position: absolute;
+    bottom: -18%; /* moves image up slightly */
+    left: 50%;
+    transform: translateX(-50%); /* centers horizontally */
+    width: 7rem;
+    height: 7rem;
+    border: 3px solid white; /* adds a clean separation */
+  }
+
+  .profileContainer_details {
+    padding-top: 5.5rem; /* adjust space below profile image */
+    text-align: center;
+  }
+
+  .profileContainer_details h2 {
+    font-size: 1.2rem;
+  }
+
+  .profileContainer_details p {
+    font-size: 0.95rem;
+  }
+
+  .ConnectionButton,
+  .ConnectedButton {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .recentActivity {
+    width: 100%;
+    text-align: center;
+  }
+
+  .WorkHistory {
+    padding: 0.8rem;
+  }
+
+  .heading {
+    font-size: 1.2rem;
+  }
+
+  .WorkHistoryCard {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+}
 
 @media (max-width: 768px) {
   .WorkHistoryContainer {
