@@ -147,7 +147,7 @@
   }
 }
 
-@media (max-width: 470px) {
+@media screen and (min-width: 400px) and (max-width: 599px) {
   .CreatePostConatiner {
     flex-direction: column;
     align-items: flex-start;
