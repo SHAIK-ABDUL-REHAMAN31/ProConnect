@@ -86,17 +86,35 @@ export default function DashBoardLayout({ children }) {
         </div>
         <div className={styles.homeContainer_feedContainer}>{children}</div>
         <div className={styles.homeContainer_extraContainer}>
-          <h3>Top profiles</h3>
-          {authState.all_profiles_fetched &&
-            (authState.all_users.map((profile) => (
-              <div key={profile._id} className={styles.extraContainer}>
-                <img src={`${BASE_URL}/${profile.userId.profilePicture}`} />
-                <div style={{ textAlign: "start" }}>
-                  <p>@{profile.userId?.username || "Unknown User"}</p>
-                  <p>{profile.userId?.name || "Unknown User"}</p>
+          <h3>Top Profiles</h3>
+          <p
+            style={{ color: "red", fontSize: "0.9rem", marginBottom: "0.5rem" }}
+          >
+            Note: Only users with at least 5 posts are shown here.
+          </p>
+
+          {authState.all_profiles_fetched ? (
+            authState.all_users
+              ?.filter((profile) => profile.posts?.length >= 5) // ✅ At least 5 posts
+              .map((profile) => (
+                <div key={profile._id} className={styles.extraContainer}>
+                  <img
+                    src={`${BASE_URL}/${profile.userId.profilePicture}`}
+                    alt="Profile"
+                  />
+                  <div style={{ textAlign: "start" }}>
+                    <p>@{profile.userId?.username || "Unknown User"}</p>
+                    <p>{profile.userId?.name || "Unknown User"}</p>
+                  </div>
                 </div>
-              </div>
-            )) || <p>No users found</p>)}
+              ))
+          ) : (
+            <p>Loading profiles...</p>
+          )}
+
+          {authState.all_profiles_fetched &&
+            authState.all_users?.filter((profile) => profile.posts?.length >= 5)
+              .length === 0 && <p>No top profiles found</p>}
         </div>
       </div>
       <div className={styles.mobileNavBar}>

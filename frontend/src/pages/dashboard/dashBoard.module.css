@@ -137,7 +137,7 @@
 
   #svgImages {
     position: absolute;
-    left: 13%;
+    left: 20%;
     bottom: 9.25%;
     cursor: pointer;
     align-self: flex-end;
@@ -176,7 +176,7 @@
 
   #svgImages {
     position: absolute;
-    left: 18%;
+    left: 20%;
     bottom: 9.25%;
     cursor: pointer;
     align-self: flex-end;
@@ -533,7 +533,7 @@
   }
 } */
 
-@media screen and (max-width: 600px) {
+@media screen and (min-width: 350px) and (max-width: 600px) {
   .allCommentsContainer {
     height: 60vh;
     width: 80vw;

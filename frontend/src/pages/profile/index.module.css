@@ -254,18 +254,6 @@
   text-align: "left";
 }
 
-@media (max-width: 600px) {
-  .profileContainer_details textarea {
-    min-height: 10rem;
-    max-height: 15rem;
-    font-size: 1rem;
-    width: 100%;
-  }
-  .profileRecentActivity {
-    display: none;
-  }
-}
-
 .AddWorkButton {
   color: #135797;
   border: 3px dotted silver;
@@ -420,7 +408,32 @@
   cursor: pointer;
 }
 
-@media (max-width: 600px) {
+@media screen and (min-width: 400px) and (max-width: 600px) {
+  .profileContainer_details textarea {
+    min-height: 10rem;
+    max-height: 15rem;
+    font-size: 1rem;
+    width: 100%;
+  }
+  .profileRecentActivity {
+    display: none;
+  }
+  .allCommentsContainer {
+    height: fit-content;
+    width: 70%;
+    position: relative;
+    border-radius: 10px;
+    padding: 1.4rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    gap: 1rem;
+  }
+}
+
+/* @media (max-width: 600px) {
   .CreatePostConatiner {
     flex-direction: column;
     align-items: flex-start;
@@ -457,4 +470,4 @@
   .CreatePostConatiner_image {
     display: none;
   }
-}
+} */

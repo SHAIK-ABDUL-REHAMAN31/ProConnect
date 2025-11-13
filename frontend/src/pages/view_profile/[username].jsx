@@ -2,8 +2,6 @@ import { BASE_URL, clientServer } from "@/config";
 import styles from "./index.module.css";
 import DashBoardLayout from "@/layout/dashboardLayout";
 import UserLayout from "@/layout/UserLayout";
-import { useSearchParams } from "next/navigation";
-
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,66 +12,64 @@ import {
   sendConnectionRequest,
 } from "@/config/redux/action/authAction";
 
-export default function ViewProfilePage(userProfile) {
+export default function ViewProfilePage({ userProfile }) {
   const router = useRouter();
   const postReducer = useSelector((state) => state.postReducer);
   const authState = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const [userPosts, setUserPosts] = useState([]);
-  const [IsCurrentUserInConnection, setIsCurrentUserInConnection] =
+  const [isCurrentUserInConnection, setIsCurrentUserInConnection] =
     useState(false);
-  const [isConnectionNull, setIsConnectionNull] = useState(true);
-  console.log("userposts:", userPosts);
+  const [isConnectionPending, setIsConnectionPending] = useState(false);
 
-  console.log("posts From post Reducer :", postReducer.posts[0]);
+  const user = userProfile?.userId; // ✅ cleaner alias
 
-  useEffect(() => {
-    let post = postReducer.posts.filter((post) => {
-      return post.userId.username === router.query.username;
-    });
-    console.log("posts from useEffect : ", post);
-
-    setUserPosts(post);
-  }, [postReducer.posts]);
-
-  useEffect(() => {
-    console.log(
-      "view Profile useEffect----------",
-      authState.connectionRequests
+  // ❌ If userProfile is missing (404 / null)
+  if (!userProfile || !user) {
+    return (
+      <UserLayout>
+        <DashBoardLayout>
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <h2>User profile not found ❌</h2>
+          </div>
+        </DashBoardLayout>
+      </UserLayout>
     );
+  }
 
+  useEffect(() => {
+    const postList = postReducer.posts.filter(
+      (post) => post.userId.username === router.query.username
+    );
+    setUserPosts(postList);
+  }, [postReducer.posts, router.query.username]);
+
+  useEffect(() => {
     const inConnections = authState.connections?.some(
-      (user) => user.connectionId._id === userProfile?.userProfile?.userId?._id
+      (item) => item.connectionId._id === user?._id
     );
-
     if (inConnections) {
       setIsCurrentUserInConnection(true);
-      const acceptedConnection = authState.connections?.find(
-        (user) =>
-          user.connectionId._id === userProfile?.userProfile?.userId?._id
+      const connection = authState.connections.find(
+        (item) => item.connectionId._id === user?._id
       );
-      if (acceptedConnection?.status_accepted === true) {
-        setIsConnectionNull(false);
-      }
+      if (connection?.status_accepted === false) setIsConnectionPending(true);
     }
 
     const inRequests = authState.connectionRequests?.connections?.some(
-      (user) => user.userId._id === userProfile?.userId?._id
+      (req) => req.userId._id === user?._id
     );
-
     if (inRequests) {
       setIsCurrentUserInConnection(true);
-      const requestConnection = authState.connectionRequests?.connections?.find(
-        (user) => user.userId._id === userProfile?.userId?._id
+      const request = authState.connectionRequests.connections.find(
+        (req) => req.userId._id === user?._id
       );
-      if (requestConnection?.status_accepted === true) {
-        setIsConnectionNull(false);
-      }
+      if (request?.status_accepted === false) setIsConnectionPending(true);
     }
-  }, [authState.connections, authState.connectionRequests]);
+  }, [authState.connections, authState.connectionRequests, user?._id]);
 
-  const getUserPosts = async () => {
+  const fetchUserRelatedData = async () => {
     await dispatch(getAllPosts());
     await dispatch(
       getConnectionsRequest({ token: localStorage.getItem("token") })
@@ -84,8 +80,9 @@ export default function ViewProfilePage(userProfile) {
   };
 
   useEffect(() => {
-    getUserPosts();
+    fetchUserRelatedData();
   }, []);
+
   return (
     <UserLayout>
       <DashBoardLayout>
@@ -93,36 +90,37 @@ export default function ViewProfilePage(userProfile) {
           <div className={styles.backDropContainer}>
             <img
               className={styles.profile_picture}
-              src={`${BASE_URL}/${userProfile.userProfile.userId.profilePicture}`}
+              src={
+                user?.profilePicture
+                  ? `${BASE_URL}/${user.profilePicture}`
+                  : "/default.jpg"
+              }
+              alt="Profile"
             />
           </div>
+
           <div className={styles.profileContainer_details}>
             <div style={{ display: "flex", gap: "0.7rem" }}>
               <div style={{ flex: "0.8" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    width: "fit-content",
-                    gap: "1.2rem",
-                  }}
-                >
-                  <h2>{userProfile.userProfile.userId.name}</h2>
-                  <p>@{userProfile.userProfile.userId.username}</p>
+                <div style={{ display: "flex", gap: "1.2rem" }}>
+                  <h2>{user.name}</h2>
+                  <p>@{user.username}</p>
                 </div>
+
                 <div
                   style={{ display: "flex", gap: "1rem", alignItems: "center" }}
                 >
-                  {IsCurrentUserInConnection ? (
+                  {isCurrentUserInConnection ? (
                     <button className={styles.ConnectedButton}>
-                      {isConnectionNull ? "Pending..." : "Connected"}
+                      {isConnectionPending ? "Pending..." : "Connected"}
                     </button>
                   ) : (
                     <button
                       onClick={async () => {
-                        dispatch(
+                        await dispatch(
                           sendConnectionRequest({
                             token: localStorage.getItem("token"),
-                            user_id: userProfile.userProfile.userId._id,
+                            connectionId: user._id, // ✅ fixed name
                           })
                         );
                       }}
@@ -131,10 +129,11 @@ export default function ViewProfilePage(userProfile) {
                       Connect
                     </button>
                   )}
+
                   <div
                     onClick={async () => {
                       const response = await clientServer.get(
-                        `/user/download_profile?id=${userProfile.userProfile.userId._id}`
+                        `/user/download_profile?id=${user._id}`
                       );
                       window.open(
                         `${BASE_URL}/${response.data.message}`,
@@ -150,7 +149,6 @@ export default function ViewProfilePage(userProfile) {
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-6"
                     >
                       <path
                         strokeLinecap="round"
@@ -161,33 +159,36 @@ export default function ViewProfilePage(userProfile) {
                   </div>
                 </div>
 
-                <div>{userProfile.userProfile.bio}</div>
+                <div>{userProfile.bio}</div>
               </div>
 
-              <div className={styles.recentActivity} style={{ flex: "0.2" }}>
+              <div
+                className={styles.profileRecentActivity}
+                style={{ flex: "0.2" }}
+              >
                 <h3>Recent Activity</h3>
 
-                {userPosts.map((post) => {
-                  return (
-                    <div key={post._id} className={styles.postCard}>
-                      <div className={styles.card}>
-                        <div className={styles.postCard_profileContainer}>
-                          {post.media !== "" ? (
-                            <img
-                              src={`${BASE_URL}/${post.media}`}
-                              alt="Post Image"
-                            />
-                          ) : (
-                            <div
-                              style={{ width: "3.4rem", height: "3.4rem" }}
-                            ></div>
-                          )}
-                        </div>
-                        <p>{post.body}</p>
+                {userPosts?.length > 0 ? (
+                  <div key={userPosts[0]._id} className={styles.postCard}>
+                    <div className={styles.card}>
+                      <div className={styles.postCard_profileContainer}>
+                        {userPosts[0].media ? (
+                          <img
+                            src={`${BASE_URL}/${userPosts[0].media}`}
+                            alt="Post"
+                          />
+                        ) : (
+                          <div
+                            style={{ width: "3.4rem", height: "3.4rem" }}
+                          ></div>
+                        )}
                       </div>
+                      <p>{userPosts[0].body}</p>
                     </div>
-                  );
-                })}
+                  </div>
+                ) : (
+                  <p>No posts yet.</p>
+                )}
               </div>
             </div>
           </div>
@@ -195,15 +196,19 @@ export default function ViewProfilePage(userProfile) {
           <div className={styles.WorkHistory}>
             <h4 className={styles.heading}>Work History</h4>
             <div className={styles.WorkHistoryContainer}>
-              {userProfile.userProfile.pastWork.map((work, index) => (
-                <div key={index} className={styles.WorkHistoryCard}>
-                  <div className={styles.cardHeader}>
-                    <h5>{work.company}</h5>
-                    <span className={styles.years}>{work.years} yrs</span>
+              {userProfile.pastWork.length > 0 ? (
+                userProfile.pastWork.map((work, index) => (
+                  <div key={index} className={styles.WorkHistoryCard}>
+                    <div className={styles.cardHeader}>
+                      <h5>{work.company}</h5>
+                      <span className={styles.years}>{work.years} yrs</span>
+                    </div>
+                    <p className={styles.position}>{work.position}</p>
                   </div>
-                  <p className={styles.position}>{work.position}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p>No past work information available.</p>
+              )}
             </div>
           </div>
         </div>
@@ -213,16 +218,20 @@ export default function ViewProfilePage(userProfile) {
 }
 
 export async function getServerSideProps(context) {
-  console.log("From Serrverside:", context.query.username);
+  try {
+    const username = context.query.username;
+    console.log("🚀 getServerSideProps received username:", username);
 
-  const req = await clientServer.get("/user/get_userProfile_basedOn_username", {
-    params: {
-      username: context.query.username,
-    },
-  });
-  const response = await req.data;
+    const response = await clientServer.get(
+      "/user/get_userProfile_basedOn_username",
+      { params: { username } }
+    );
 
-  console.log(response);
+    console.log("✅ API response:", response.data);
 
-  return { props: { userProfile: req.data.userProfile } };
+    return { props: { userProfile: response.data.userProfile } };
+  } catch (error) {
+    console.error("❌ SSR Error:", error.response?.data || error.message);
+    return { props: { userProfile: null, error: "User not found" } };
+  }
 }

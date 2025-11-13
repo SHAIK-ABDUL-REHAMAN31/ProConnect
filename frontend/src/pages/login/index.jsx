@@ -17,42 +17,50 @@ export default function LoginComponent() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  // ✅ Redirect when logged in
   useEffect(() => {
-    if (authState.loggedIn) {
-      router.push("/dashboard");
-    }
+    if (authState.loggedIn) router.push("/dashboard");
   }, [authState.loggedIn]);
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      router.push("/dashboard");
-    }
+    if (localStorage.getItem("token")) router.push("/dashboard");
   }, []);
 
-  // ✅ Clear auth message when toggling between Sign In / Up
   useEffect(() => {
     dispatch(emptyMessage());
   }, [UserLoginMethod]);
 
-  // ✅ Handle registration
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+
+    const filtered = value.replace(/[^a-zA-Z0-9_]/g, "");
+    setUsername(filtered);
+  };
+
   const handleRegister = () => {
     if (!name || !username || !email || !password) {
       alert("Please fill all fields!");
       return;
     }
 
-    console.log("Registering...");
-    dispatch(registerUser({ name, username, email, password }));
+    const usernamePattern = /^[a-zA-Z0-9_]+$/;
+    if (!usernamePattern.test(username.trim())) {
+      alert(
+        "Invalid username. Only letters, numbers, and underscores (_) allowed. No spaces or special characters."
+      );
+      return;
+    }
 
-    // ✅ Clear inputs after successful registration
+    console.log("Registering...");
+    dispatch(
+      registerUser({ name, username: username.trim(), email, password })
+    );
+
     setName("");
     setUsername("");
     setEmail("");
     setPassword("");
   };
 
-  // ✅ Handle login
   const handleLogin = () => {
     if (!email || !password) {
       alert("Please fill all fields!");
@@ -90,9 +98,9 @@ export default function LoginComponent() {
                   />
                   <input
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={handleUsernameChange}
                     className={styles.inputField}
-                    placeholder="Username"
+                    placeholder="Username (letters, numbers, _ only)"
                     type="text"
                   />
                 </div>
@@ -115,13 +123,9 @@ export default function LoginComponent() {
 
               <div className={styles.submitButton}>
                 <p
-                  onClick={() => {
-                    if (UserLoginMethod) {
-                      handleLogin();
-                    } else {
-                      handleRegister();
-                    }
-                  }}
+                  onClick={() =>
+                    UserLoginMethod ? handleLogin() : handleRegister()
+                  }
                 >
                   {UserLoginMethod ? "Sign in" : "Sign Up"}
                 </p>
@@ -143,9 +147,7 @@ export default function LoginComponent() {
               >
                 <p
                   style={{ background: "white", color: "black" }}
-                  onClick={() => {
-                    setuserLoginMthod(!UserLoginMethod);
-                  }}
+                  onClick={() => setuserLoginMthod(!UserLoginMethod)}
                 >
                   {UserLoginMethod ? "Sign Up" : "Sign In"}
                 </p>

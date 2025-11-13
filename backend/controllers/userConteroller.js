@@ -110,30 +110,50 @@ export const convertProfileToPDF = async (userProfile) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, username, password } = req.body;
+    let { name, email, username, password } = req.body;
 
     if (!email || !name || !username || !password) {
-      return res
-        .status(400)
-        .json({ message: "Username and password are required." });
+      return res.status(400).json({ message: "All fields are required." });
     }
 
-    const userExists = await User.findOne({ email });
+    // ✅ Remove leading/trailing spaces
+    username = username.trim();
+
+    // ✅ Strictly allow only letters, numbers, and underscores — no spaces anywhere
+    const validUsername = /^[a-zA-Z0-9_]+$/;
+    if (!validUsername.test(username)) {
+      return res.status(400).json({
+        message:
+          "Invalid username. Only letters, numbers, and underscores (_) are allowed. No spaces.",
+      });
+    }
+
+    const emailLower = email.trim().toLowerCase();
+
+    // ✅ Check existing users
+    const userExists = await User.findOne({ email: emailLower });
     if (userExists) {
-      return res.status(400).json({ message: "User already Exists." });
+      return res.status(400).json({ message: "User already exists." });
+    }
+
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      return res.status(400).json({ message: "Username is already taken." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = new User({
-      name,
+      name: name.trim(),
       username,
       password: hashedPassword,
-      email,
+      email: emailLower,
     });
     await newUser.save();
 
     const profile = new Profile({ userId: newUser._id });
     await profile.save();
+
     return res.json({ message: "User registered successfully." });
   } catch (error) {
     console.error("Registration error:", error);
@@ -145,14 +165,15 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required." });
+      return res.status(400).json({ message: "Email and password required." });
     }
 
-    const user = await User.findOne({ email });
+    const emailLower = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: emailLower });
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password." });
     }
@@ -164,9 +185,13 @@ export const login = async (req, res) => {
 
     const token = crypto.randomBytes(64).toString("hex");
     user.token = token;
-    await user.updateOne({ _id: user._id }, { token: token });
     await user.save();
-    return res.status(200).json({ token: token, message: "Login successful." });
+
+    return res.status(200).json({
+      token,
+      username: user.username,
+      message: "Login successful.",
+    });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ message: "Server error during login." });
@@ -178,7 +203,7 @@ export const updateProfilePicture = async (req, res, next) => {
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user." });
+      return res.status(401).json({ message: " Unauthorized user.." });
     }
     user.profilePicture = req.file.filename;
     await user.save();
@@ -196,7 +221,7 @@ export const updateUserprofile = async (req, res) => {
     const { token, ...newUserData } = req.body;
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ messge: "Unauthorized user." });
+      return res.status(401).json({ messge: "Unauthorized user.." });
     }
 
     const { username, email } = newUserData;
@@ -222,10 +247,11 @@ export const updateUserprofile = async (req, res) => {
 
 export const getUserAndProfile = async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = req.query.token;
+    console.log("🔹 Token received from frontend:", token);
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user." });
+      return res.status(401).json({ message: " Unauthorized User" });
     }
 
     const userProfile = await Profile.findOne({ userId: user._id }).populate(
@@ -247,7 +273,7 @@ export const updateUserData = async (req, res) => {
 
     const userprofile = await User.findOne({ token: token });
     if (!userprofile) {
-      return res.status(401).json({ message: "Unauthorized user." });
+      return res.status(401).json({ message: "Unauthorized user.." });
     }
 
     const update_user_profile = await Profile.findOne({
@@ -353,7 +379,7 @@ export const getMyConnectionsRequest = async (req, res) => {
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "  Unauthorized user." });
+      return res.status(401).json({ message: "  Unauthorized user.." });
     }
 
     const connections = await ConnectionRequest.find({
@@ -375,7 +401,7 @@ export const whatAreMyConnections = async (req, res) => {
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user." });
+      return res.status(401).json({ message: "Unauthorized user.." });
     }
 
     // if (user) {
@@ -399,7 +425,7 @@ export const acceptConnectionRequest = async (req, res) => {
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user." });
+      return res.status(401).json({ message: "Unauthorized user.." });
     }
     const connectionRequest = await ConnectionRequest.findOne({
       _id: requestId,
@@ -427,24 +453,53 @@ export const acceptConnectionRequest = async (req, res) => {
 };
 
 export const getuserProfileBasedOnUsername = async (req, res) => {
-  const { username } = req.query;
   try {
-    const user = await User.findOne({ username });
+    // Sanitize and normalize the incoming username parameter
+    const incomingRaw = decodeURIComponent(req.query.username || "");
+    const incoming = incomingRaw.trim().toLowerCase();
+    console.log(
+      "Incoming:",
+      JSON.stringify(incomingRaw),
+      JSON.stringify(incoming)
+    );
 
-    if (!user) {
-      return res.status(401).json({ message: "User Not Found." });
+    const allUsers = await User.find({}, "username _id");
+    for (const u of allUsers) {
+      console.log(
+        "DB:",
+        JSON.stringify(u.username),
+        JSON.stringify(u.username.trim().toLowerCase())
+      );
+    }
+    const matchedUser = allUsers.find(
+      (u) =>
+        typeof u.username === "string" &&
+        u.username.trim().toLowerCase() === incoming
+    );
+
+    if (!matchedUser) {
+      console.log(
+        `No match. Incoming="${incoming}", all usernames=`,
+        allUsers.map((u) => u.username)
+      );
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const userProfile = await Profile.findOne({ userId: user._id }).populate(
-      "userId",
-      "name username email profilePicture"
-    );
-    return res.status(200).json({ userProfile });
-  } catch (err) {
-    console.error("Accept connection request error:", err);
-    return res.status(500).json({
-      message:
-        "Server error during getting UserProfileBasedOnUsername request.",
-    });
+    // Profile fetch and population
+    const userProfile = await Profile.findOne({ userId: matchedUser._id })
+      .populate("userId")
+      .exec();
+
+    if (!userProfile) {
+      console.log("Profile not found for user:", matchedUser.username);
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    // Success logging
+    console.log("✅ From ServerSide:", matchedUser.username);
+    res.status(200).json({ userProfile });
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

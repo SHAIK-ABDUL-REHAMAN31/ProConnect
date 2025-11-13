@@ -6,8 +6,9 @@
 }
 .userCard {
   display: flex;
-  gap: 1.2rem;
+
   background: white;
+  align-items: center;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 80%;
@@ -27,4 +28,55 @@
 .userCard:hover {
   transform: scale(1.005);
   border: 1px solid black;
+}
+.userCardDetails {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+  width: 100%;
+}
+
+.userCardDetails h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+  word-break: break-word;
+}
+
+.userCardDetails p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .userCardDetails h2 {
+    font-size: 1rem;
+  }
+
+  .userCardDetails p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .userCardDetails {
+    align-items: center;
+    text-align: center;
+  }
+
+  .userCardDetails h2 {
+    font-size: 0.95rem;
+    text-align: start;
+  }
+
+  .userCardDetails p {
+    font-size: 0.8rem;
+  }
 }

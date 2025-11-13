@@ -175,22 +175,23 @@ export default function ProfilePage() {
                 <h3>Recent Activity</h3>
 
                 {userPosts?.length > 0 ? (
-                  userPosts.map((post) => (
-                    <div key={post._id} className={styles.postCard}>
-                      <div className={styles.card}>
-                        <div className={styles.postCard_profileContainer}>
-                          {post.media ? (
-                            <img src={`${BASE_URL}/${post.media}`} alt="Post" />
-                          ) : (
-                            <div
-                              style={{ width: "3.4rem", height: "3.4rem" }}
-                            ></div>
-                          )}
-                        </div>
-                        <p>{post.body}</p>
+                  <div key={userPosts[0]._id} className={styles.postCard}>
+                    <div className={styles.card}>
+                      <div className={styles.postCard_profileContainer}>
+                        {userPosts[0].media ? (
+                          <img
+                            src={`${BASE_URL}/${userPosts[0].media}`}
+                            alt="Post"
+                          />
+                        ) : (
+                          <div
+                            style={{ width: "3.4rem", height: "3.4rem" }}
+                          ></div>
+                        )}
                       </div>
+                      <p>{userPosts[0].body}</p>
                     </div>
-                  ))
+                  </div>
                 ) : (
                   <p>No posts yet.</p>
                 )}

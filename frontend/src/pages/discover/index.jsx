@@ -38,7 +38,7 @@ export default function DiscoverPage() {
                     className={styles.userCard_img}
                     src={`${BASE_URL}/${profiles.userId.profilePicture}`}
                   />
-                  <div>
+                  <div className={styles.userCardDetails}>
                     <h2>{profiles.userId.username}</h2>
                     <p>{profiles.userId.email}</p>
                   </div>
