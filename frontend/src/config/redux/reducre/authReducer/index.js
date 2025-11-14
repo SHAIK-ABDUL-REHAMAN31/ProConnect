@@ -4,10 +4,10 @@ import {
   getMyConnectionsRequest,
   loginUser,
   registerUser,
+  sendConnectionRequest,
 } from "../../action/authAction";
 import { getAboutUser } from "../../action/postAction";
 import { getAllUsers } from "../../action/postAction";
-import { act } from "react";
 
 const initialState = {
   user: undefined,
@@ -99,9 +99,17 @@ const authSlice = createSlice({
         state.message = action.payload;
       })
       .addCase(getMyConnectionsRequest.fulfilled, (state, action) => {
-        state.connectionRequests = action.payload;
+        state.connectionRequests = action.payload; // array from backend
+        console.log("Stored connection requests:", state.connectionRequests);
       })
       .addCase(getMyConnectionsRequest.rejected, (state, action) => {
+        state.message = action.payload;
+      })
+
+      .addCase(sendConnectionRequest.fulfilled, (state, action) => {
+        state.message = action.payload;
+      })
+      .addCase(sendConnectionRequest.rejected, (state, action) => {
         state.message = action.payload;
       });
   },

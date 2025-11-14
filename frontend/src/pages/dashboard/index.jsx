@@ -24,14 +24,17 @@ export default function DashBoardComponent() {
   const postState = useSelector((state) => state.postReducer);
 
   useEffect(() => {
-    if (authState.isTokenThere) {
-      dispatch(getAllPosts());
-      dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+    const token = localStorage.getItem("token");
+
+    if (token && !authState.user) {
+      dispatch(getAboutUser({ token }));
     }
-    if (!authState.all_profiles_fetched) {
+
+    if (token) {
+      dispatch(getAllPosts());
       dispatch(getAllUsers());
     }
-  }, [authState.isTokenThere]);
+  }, []);
 
   const [postContent, setPostContent] = useState("");
   const [fileContent, setFileContent] = useState();

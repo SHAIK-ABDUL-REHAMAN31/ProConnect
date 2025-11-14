@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { setIsTokenThere } from "@/config/redux/reducre/authReducer";
 import { BASE_URL } from "@/config";
+import { getAllPosts, getAllUsers } from "@/config/redux/action/postAction";
 
 export default function DashBoardLayout({ children }) {
   const router = useRouter();
@@ -16,6 +17,26 @@ export default function DashBoardLayout({ children }) {
     }
     dispatch(setIsTokenThere());
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await dispatch(getAllPosts());
+      await dispatch(getAllUsers());
+    };
+
+    fetchData();
+  }, []);
+
+  const loggedInUserId = authState?.user?._id;
+
+  const filteredUsers =
+    authState.all_users?.filter((profile) => {
+      return profile?.userId?._id !== loggedInUserId;
+    }) || [];
+
+  const randomUsers = [...filteredUsers]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 5);
 
   return (
     <div className="container">
@@ -86,35 +107,34 @@ export default function DashBoardLayout({ children }) {
         </div>
         <div className={styles.homeContainer_feedContainer}>{children}</div>
         <div className={styles.homeContainer_extraContainer}>
-          <h3>Top Profiles</h3>
-          <p
-            style={{ color: "red", fontSize: "0.9rem", marginBottom: "0.5rem" }}
-          >
-            Note: Only users with at least 5 posts are shown here.
-          </p>
+          <h3>Explore New People</h3>
 
           {authState.all_profiles_fetched ? (
-            authState.all_users
-              ?.filter((profile) => profile.posts?.length >= 5) // ✅ At least 5 posts
-              .map((profile) => (
-                <div key={profile._id} className={styles.extraContainer}>
+            randomUsers.length > 0 ? (
+              randomUsers.map((profile) => (
+                <div
+                  key={profile._id}
+                  className={styles.extraContainer}
+                  onClick={() =>
+                    router.push(`/view_profile/${profile.userId.username}`)
+                  }
+                >
                   <img
                     src={`${BASE_URL}/${profile.userId.profilePicture}`}
                     alt="Profile"
                   />
                   <div style={{ textAlign: "start" }}>
-                    <p>@{profile.userId?.username || "Unknown User"}</p>
-                    <p>{profile.userId?.name || "Unknown User"}</p>
+                    <p>@{profile.userId.username}</p>
+                    <p>{profile.userId.name}</p>
                   </div>
                 </div>
               ))
+            ) : (
+              <p>No users to explore</p>
+            )
           ) : (
-            <p>Loading profiles...</p>
+            <p>Loading...</p>
           )}
-
-          {authState.all_profiles_fetched &&
-            authState.all_users?.filter((profile) => profile.posts?.length >= 5)
-              .length === 0 && <p>No top profiles found</p>}
         </div>
       </div>
       <div className={styles.mobileNavBar}>

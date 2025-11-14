@@ -374,19 +374,20 @@ export const sendConnnectionRequest = async (req, res) => {
 };
 
 export const getMyConnectionsRequest = async (req, res) => {
-  // Implementation for retrieving user connections
   const token = req.query.token;
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "  Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user.." });
     }
 
     const connections = await ConnectionRequest.find({
-      userId: user._id,
-    }).populate("connectionId", "name username email profilePicture");
+      $or: [{ userId: user._id }, { connectionId: user._id }],
+    })
+      .populate("userId", "name username email profilePicture")
+      .populate("connectionId", "name username email profilePicture");
 
-    return res.status(200).json({ connections: connections });
+    return res.status(200).json({ connections });
   } catch (error) {
     console.error("Get connections error:", error);
     return res
@@ -396,31 +397,30 @@ export const getMyConnectionsRequest = async (req, res) => {
 };
 
 export const whatAreMyConnections = async (req, res) => {
-  // Implementation for retrieving user connections
-  const token = req.query.token;
   try {
-    const user = await User.findOne({ token: token });
+    const { token } = req.query;
+
+    const user = await User.findOne({ token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user" });
     }
 
-    // if (user) {
-    //   return res.status(200).json({ message: "userFound", user: user._id });
-    // }
     const connections = await ConnectionRequest.find({
-      connectionId: user._id,
-    }).populate("userId", "name username email profilePicture");
-    return res.status(200).json({ connections: connections });
+      $or: [{ userId: user._id }, { connectionId: user._id }],
+    })
+      .populate("userId", "name username email profilePicture")
+      .populate("connectionId", "name username email profilePicture");
+
+    return res.status(200).json({ connections });
   } catch (error) {
     console.error("Get connections error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during fetching connections." });
+    return res.status(500).json({
+      message: "Server error while fetching connections",
+    });
   }
 };
 
 export const acceptConnectionRequest = async (req, res) => {
-  // Implementation for accepting connection requests
   const { token, requestId, action_type } = req.body;
   try {
     const user = await User.findOne({ token: token });
@@ -434,7 +434,7 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(404).json({ message: "Connection Request Not Found." });
     }
 
-    if (action_type !== "accept") {
+    if (action_type === "accept") {
       connectionRequest.status_accepted = true;
     } else {
       connectionRequest.status_accepted = false;
@@ -485,7 +485,6 @@ export const getuserProfileBasedOnUsername = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Profile fetch and population
     const userProfile = await Profile.findOne({ userId: matchedUser._id })
       .populate("userId")
       .exec();

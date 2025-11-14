@@ -47,7 +47,7 @@ export const sendConnectionRequest = createAsyncThunk(
         "/user/send_connection_request",
         {
           token: userData.token,
-          connectionId: userData.user_id,
+          connectionId: userData.connectionId,
         }
       );
 
@@ -80,17 +80,19 @@ export const getConnectionsRequest = createAsyncThunk(
 
 export const getMyConnectionsRequest = createAsyncThunk(
   "user/getMyConnectionsRequest",
-  async (user, thunkAPI) => {
+  async (token, thunkAPI) => {
     try {
-      const respone = await clientServer.get("/user/what_are_my_connections", {
-        params: {
-          token: user.token,
-        },
+      console.log("Token sent →", token);
+
+      const response = await clientServer.get("/user/what_are_my_connections", {
+        params: { token },
       });
 
-      return thunkAPI.fulfillWithValue(respone.data);
+      console.log("Response from getMyConnections →", response.data);
+
+      return response.data.connections; // array
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.respone.data);
+      return thunkAPI.rejectWithValue(err.response?.data);
     }
   }
 );

@@ -23,15 +23,14 @@ export default function ViewProfilePage({ userProfile }) {
     useState(false);
   const [isConnectionPending, setIsConnectionPending] = useState(false);
 
-  const user = userProfile?.userId; // ✅ cleaner alias
+  const user = userProfile?.userId;
 
-  // ❌ If userProfile is missing (404 / null)
   if (!userProfile || !user) {
     return (
       <UserLayout>
         <DashBoardLayout>
           <div style={{ padding: "2rem", textAlign: "center" }}>
-            <h2>User profile not found ❌</h2>
+            <h2>User profile not found </h2>
           </div>
         </DashBoardLayout>
       </UserLayout>
@@ -46,26 +45,23 @@ export default function ViewProfilePage({ userProfile }) {
   }, [postReducer.posts, router.query.username]);
 
   useEffect(() => {
-    const inConnections = authState.connections?.some(
+    let foundConnection = authState.connections?.find(
       (item) => item.connectionId._id === user?._id
     );
-    if (inConnections) {
+
+    if (foundConnection) {
       setIsCurrentUserInConnection(true);
-      const connection = authState.connections.find(
-        (item) => item.connectionId._id === user?._id
-      );
-      if (connection?.status_accepted === false) setIsConnectionPending(true);
+      setIsConnectionPending(!foundConnection.status_accepted);
+      return;
     }
 
-    const inRequests = authState.connectionRequests?.connections?.some(
+    foundConnection = authState.connectionRequests?.connections?.find(
       (req) => req.userId._id === user?._id
     );
-    if (inRequests) {
+
+    if (foundConnection) {
       setIsCurrentUserInConnection(true);
-      const request = authState.connectionRequests.connections.find(
-        (req) => req.userId._id === user?._id
-      );
-      if (request?.status_accepted === false) setIsConnectionPending(true);
+      setIsConnectionPending(!foundConnection.status_accepted);
     }
   }, [authState.connections, authState.connectionRequests, user?._id]);
 
@@ -120,9 +116,12 @@ export default function ViewProfilePage({ userProfile }) {
                         await dispatch(
                           sendConnectionRequest({
                             token: localStorage.getItem("token"),
-                            connectionId: user._id, // ✅ fixed name
+                            connectionId: user._id,
                           })
                         );
+
+                        setIsCurrentUserInConnection(true);
+                        setIsConnectionPending(true);
                       }}
                       className={styles.ConnectionButton}
                     >

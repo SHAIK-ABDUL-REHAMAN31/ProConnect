@@ -211,6 +211,9 @@
     padding: 1rem;
     border-radius: 10px;
   }
+  .profileRecentActivity {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {

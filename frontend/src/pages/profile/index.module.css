@@ -408,7 +408,7 @@
   cursor: pointer;
 }
 
-@media screen and (min-width: 400px) and (max-width: 600px) {
+@media screen and (min-width: 350px) and (max-width: 600px) {
   .profileContainer_details textarea {
     min-height: 10rem;
     max-height: 15rem;
@@ -430,6 +430,23 @@
     justify-content: space-between;
     overflow: hidden;
     gap: 1rem;
+  }
+  .backDropContainer {
+    height: 20vh;
+  }
+  .backDropContainer img {
+    width: 5em; /* scales with viewport width */
+    height: 5em;
+  }
+  .backDropContainer_profilOverLay {
+    width: 5em;
+    height: 5em;
+  }
+  .profileContainer_details {
+    padding-top: 5rem;
+  }
+  .singlecardImage {
+    padding: 0rem;
   }
 }
 

@@ -9,88 +9,38 @@ import {
 import styles from "./index.module.css";
 import { BASE_URL } from "@/config";
 import { useRouter } from "next/router";
-import { connection } from "next/server";
+
 export default function MyConnectionsPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    dispatch(getMyConnectionsRequest({ token: localStorage.getItem("token") }));
-  }, []);
+  const loggedInUserId = authState.user?._id;
 
   useEffect(() => {
-    if (authState.connectionRequests.length != 0) {
-      console.log(
-        "authStateConnectionRequests ==========",
-        authState.connectionRequests.connections
-      );
-    }
-  }, [authState.connectionRequests]);
+    const token = localStorage.getItem("token");
+    if (token) dispatch(getMyConnectionsRequest(token));
+  }, []);
+
+  const connections = authState.connectionRequests || [];
+  console.log(authState.connectionRequests);
 
   return (
     <UserLayout>
       <DashBoardLayout>
         <div className={styles.usercardContainer}>
           <h1 style={{ padding: "0.5rem" }}>My Connections</h1>
-          {authState.connectionRequests.length != 0 &&
-            authState.connectionRequests.connections
-              .filter((connection) => connection.status_accepted == null)
-              .map((user, index) => {
-                return (
-                  <div
-                    onClick={() => {
-                      router.push(`/view_profile/${user.userId.username}`);
-                    }}
-                    className={styles.userCard}
-                    key={index}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "1.2rem",
-                        alignItems: "center",
-                      }}
-                    >
-                      <img
-                        className={styles.userProfilePic}
-                        src={`${BASE_URL}/${user.userId.profilePicture}`}
-                        alt="/"
-                      />
-                      <div className={styles.userInfo}>
-                        <h2>{user.userId.name}</h2>
-                        <p>@{user.userId.username}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        dispatch(
-                          acceptConnection({
-                            connectionId: user._id,
-                            token: localStorage.getItem("token"),
-                            action_type: "accept",
-                          })
-                        );
-                      }}
-                      className={styles.acceptButton}
-                    >
-                      Accept
-                    </button>
-                  </div>
-                );
-              })}
-          <h4 style={{ padding: "0.5rem" }}>My Network</h4>
 
-          {authState.connectionRequests?.connections
-            ?.filter((connection) => connection.status_accepted === true)
-            .map((user, index) => (
+          {/* Pending Requests */}
+          {connections
+            .filter((c) => c.status_accepted == null)
+            .map((req, i) => (
               <div
-                onClick={() => {
-                  router.push(`/view_profile/${user.userId.username}`);
-                }}
+                key={i}
                 className={styles.userCard}
-                key={index}
+                onClick={() =>
+                  router.push(`/view_profile/${req.userId.username}`)
+                }
               >
                 <div
                   style={{
@@ -101,16 +51,70 @@ export default function MyConnectionsPage() {
                 >
                   <img
                     className={styles.userProfilePic}
-                    src={`${BASE_URL}/${user.userId.profilePicture}`}
+                    src={`${BASE_URL}/${req.userId.profilePicture}`}
                     alt="/"
                   />
                   <div className={styles.userInfo}>
-                    <h2>{user.userId.name}</h2>
-                    <p>@{user.userId.username}</p>
+                    <h2>{req.userId.name}</h2>
+                    <p>@{req.userId.username}</p>
                   </div>
                 </div>
+
+                <button
+                  className={styles.acceptButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch(
+                      acceptConnection({
+                        connectionId: req._id,
+                        token: localStorage.getItem("token"),
+                        action_type: "accept",
+                      })
+                    );
+                  }}
+                >
+                  Accept
+                </button>
               </div>
             ))}
+
+          {/* Accepted Connections */}
+          <h4 style={{ padding: "0.5rem" }}>My Network</h4>
+
+          {connections
+            .filter((c) => c.status_accepted === true)
+            .map((c, i) => {
+              const otherUser =
+                c.userId._id === loggedInUserId ? c.connectionId : c.userId;
+
+              return (
+                <div
+                  key={i}
+                  className={styles.userCard}
+                  onClick={() =>
+                    router.push(`/view_profile/${otherUser.username}`)
+                  }
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "1.2rem",
+                      alignItems: "center",
+                    }}
+                  >
+                    <img
+                      className={styles.userProfilePic}
+                      src={`${BASE_URL}/${otherUser.profilePicture}`}
+                      alt={otherUser.name}
+                    />
+                    <div className={styles.userInfo}>
+                      <h2>{otherUser.name}</h2>
+                      <p>@{otherUser.username}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </DashBoardLayout>
     </UserLayout>
