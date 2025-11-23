@@ -25,7 +25,9 @@ export default function DashBoardComponent() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+    const userString = localStorage.getItem("user");
+
+    const savedUser = userString ? JSON.parse(userString) : null;
 
     if (savedUser && !authState.user) {
       dispatch({ type: "SET_USER", payload: savedUser });
