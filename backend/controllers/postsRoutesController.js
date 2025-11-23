@@ -1,33 +1,49 @@
 import User from "../models/userSchema.js";
 import Post from "../models/postsSchema.js";
 import Comment from "../models/commentsSchema.js";
+import { v2 as cloudinary } from "cloudinary";
 
 export const ActiveCheck = async (req, res) => {
   return res.status(200).json({ message: "Server status Running " });
 };
 
 export const createPost = async (req, res) => {
-  const { token } = req.body;
+  const { token, body } = req.body;
 
   try {
-    console.log("Create post request body:", req.body);
-    const user = await User.findOne({ token: token });
+    const user = await User.findOne({ token });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
+    let mediaUrl = "";
+    let fileType = "";
+
+    if (req.file) {
+      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        folder: "posts_media",
+      });
+
+      mediaUrl = uploadResult.secure_url;
+      fileType = req.file.mimetype.split("/")[1] || "";
+    } else if (req.body.media) {
+      mediaUrl = req.body.media;
+    }
+
     const newPost = new Post({
       userId: user._id,
-      body: req.body.body,
-      media: req.file != undefined ? req.file.filename : "",
-      fileType: req.file != undefined ? req.file.mimetype.split("/")[1] : "",
+      body,
+      media: mediaUrl,
+      fileType,
     });
 
     await newPost.save();
 
-    return res
-      .status(201)
-      .json({ message: "Post created successfully.", post: newPost });
+    return res.status(201).json({
+      message: "Post created successfully",
+      cloud_url: mediaUrl,
+      post: newPost,
+    });
   } catch (error) {
     console.error("Create post error:", error);
     return res

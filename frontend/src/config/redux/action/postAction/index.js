@@ -46,20 +46,16 @@ export const getAllUsers = createAsyncThunk(
 export const createPost = createAsyncThunk(
   "/posts/createPost",
   async (userData, thunkApi) => {
-    const { file, body } = userData;
+    const { media, body } = userData;
     try {
       const formData = new FormData();
       formData.append("token", localStorage.getItem("token"));
       formData.append("body", body);
-      formData.append("media", file);
+      formData.append("media", media);
 
-      const response = await clientServer.post("/create_post", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await clientServer.post("/create_post", formData);
 
-      if (response.status == 200) {
+      if (response.status == 201) {
         return thunkApi.fulfillWithValue("Post Uplod Sucessfully");
       } else {
         return thunkApi.rejectWithValue("Post Uploading Failed");

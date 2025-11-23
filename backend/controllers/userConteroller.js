@@ -116,10 +116,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    // ✅ Remove leading/trailing spaces
     username = username.trim();
 
-    // ✅ Strictly allow only letters, numbers, and underscores — no spaces anywhere
     const validUsername = /^[a-zA-Z0-9_]+$/;
     if (!validUsername.test(username)) {
       return res.status(400).json({

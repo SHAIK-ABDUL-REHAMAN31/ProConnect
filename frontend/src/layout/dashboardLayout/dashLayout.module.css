@@ -1,5 +1,6 @@
 .homeContainer {
   display: flex;
+  margin-top: 2rem;
 }
 .homeContainer > :nth-child(odd) {
   flex: 0.2;

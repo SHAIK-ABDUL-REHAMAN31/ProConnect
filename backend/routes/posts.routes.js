@@ -7,23 +7,12 @@ import { commentOnpost } from "../controllers/postsRoutesController.js";
 import { getCommentsOnPost } from "../controllers/postsRoutesController.js";
 import { deleteUserComment } from "../controllers/postsRoutesController.js";
 import { likePost } from "../controllers/postsRoutesController.js";
-import multer from "multer";
+import upload from "../config/multer.js";
 
 const router = Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
-
 router.route("/").get(ActiveCheck);
-router.route("/create_post").post(upload.single("media"), createPost);
+router.post("/create_post", upload.single("media"), createPost);
 router.route("/get_all_posts").get(getAllPosts);
 router.route("/delete_post").delete(deletePost);
 router.route("/comment_on_post").post(commentOnpost);

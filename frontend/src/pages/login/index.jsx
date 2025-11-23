@@ -31,7 +31,6 @@ export default function LoginComponent() {
 
   const handleUsernameChange = (e) => {
     const value = e.target.value;
-
     const filtered = value.replace(/[^a-zA-Z0-9_]/g, "");
     setUsername(filtered);
   };
@@ -77,10 +76,18 @@ export default function LoginComponent() {
         <div className={styles.cardContainer}>
           <div className={styles.cardContainer_left}>
             <p className={styles.cardLeftHeading}>
-              {UserLoginMethod ? "Sign in" : "Sign Up"}
+              {UserLoginMethod ? "Welcome Back" : "Create Account"}
+            </p>
+            <p className={styles.subHeading}>
+              {UserLoginMethod
+                ? "Enter your details to access your account"
+                : "Join our community and start connecting"}
             </p>
 
-            <p style={{ color: authState.isError ? "red" : "green" }}>
+            <p
+              className={styles.message}
+              style={{ color: authState.isError ? "#ef4444" : "#10b981" }}
+            >
               {typeof authState.message === "object"
                 ? authState.message?.message
                 : authState.message}
@@ -93,14 +100,14 @@ export default function LoginComponent() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className={styles.inputField}
-                    placeholder="Name"
+                    placeholder="Full Name"
                     type="text"
                   />
                   <input
                     value={username}
                     onChange={handleUsernameChange}
                     className={styles.inputField}
-                    placeholder="Username (letters, numbers, _ only)"
+                    placeholder="Username"
                     type="text"
                   />
                 </div>
@@ -110,8 +117,8 @@ export default function LoginComponent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.inputField}
-                placeholder="Email"
-                type="text"
+                placeholder="Email Address"
+                type="email"
               />
               <input
                 value={password}
@@ -122,36 +129,31 @@ export default function LoginComponent() {
               />
 
               <div className={styles.submitButton}>
-                <p
+                <button
                   onClick={() =>
                     UserLoginMethod ? handleLogin() : handleRegister()
                   }
                 >
-                  {UserLoginMethod ? "Sign in" : "Sign Up"}
-                </p>
+                  {UserLoginMethod ? "Sign In" : "Sign Up"}
+                </button>
               </div>
             </div>
           </div>
 
           <div className={styles.cardContainer_right}>
-            <div>
+            <div className={styles.rightContent}>
+              <h2>{UserLoginMethod ? "New Here?" : "Welcome Back!"}</h2>
               <p>
                 {UserLoginMethod
-                  ? "Don't Have An Account?"
-                  : "Already have an account?"}
+                  ? "Sign up and discover a great amount of new opportunities!"
+                  : "To keep connected with us please login with your personal info"}
               </p>
-              <br />
-              <div
-                style={{ background: "white", borderRadius: "10px" }}
-                className={styles.submitButton}
+              <button
+                className={styles.switchButton}
+                onClick={() => setuserLoginMthod(!UserLoginMethod)}
               >
-                <p
-                  style={{ background: "white", color: "black" }}
-                  onClick={() => setuserLoginMthod(!UserLoginMethod)}
-                >
-                  {UserLoginMethod ? "Sign Up" : "Sign In"}
-                </p>
-              </div>
+                {UserLoginMethod ? "Sign Up" : "Sign In"}
+              </button>
             </div>
           </div>
         </div>

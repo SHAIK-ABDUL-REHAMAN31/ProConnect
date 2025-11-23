@@ -12,11 +12,13 @@ export const loginUser = createAsyncThunk(
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-      } else {
-        return thunkAPI.rejectWithValue({ message: "No token received" });
+        localStorage.setItem("user", JSON.stringify(response.data.user)); // store user
       }
 
-      return thunkAPI.fulfillWithValue(response.data.token);
+      return thunkAPI.fulfillWithValue({
+        token: response.data.token,
+        user: response.data.user,
+      });
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response.data);
     }
