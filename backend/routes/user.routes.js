@@ -16,21 +16,10 @@ import { sendConnnectionRequest } from "../controllers/userConteroller.js";
 import { getMyConnectionsRequest } from "../controllers/userConteroller.js";
 import { whatAreMyConnections } from "../controllers/userConteroller.js";
 import { acceptConnectionRequest } from "../controllers/userConteroller.js";
-import multer from "multer";
+import upload from "../config/multer.js";
 
 const router = Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
 router
   .route("/update_profile_picture")
   .post(upload.single("profile_picture"), updateProfilePicture, (req, res) => {
