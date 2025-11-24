@@ -16,33 +16,12 @@ import { sendConnnectionRequest } from "../controllers/userConteroller.js";
 import { getMyConnectionsRequest } from "../controllers/userConteroller.js";
 import { whatAreMyConnections } from "../controllers/userConteroller.js";
 import { acceptConnectionRequest } from "../controllers/userConteroller.js";
-import multer from "multer";
-
+import { profileUpload } from "../config/multer.js";
 const router = Router();
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
 
 router
-  .route("/update_profile_picture")
-  .post(upload.single("profile_picture"), updateProfilePicture, (req, res) => {
-    try {
-      return res.status(200).json({ filename: req.file.filename });
-    } catch (error) {
-      console.error("File upload error:", error);
-      return res
-        .status(500)
-        .json({ message: "Server error during file upload." });
-    }
-  });
+  .route("/profile_picture_update")
+  .post(profileUpload.single("profile_picture"), updateProfilePicture);
 
 router.route("/register").post(register);
 router.route("/login").post(login);

@@ -7,7 +7,7 @@ import { commentOnpost } from "../controllers/postsRoutesController.js";
 import { getCommentsOnPost } from "../controllers/postsRoutesController.js";
 import { deleteUserComment } from "../controllers/postsRoutesController.js";
 import { likePost } from "../controllers/postsRoutesController.js";
-import upload from "../config/multer.js";
+import { upload } from "../config/multer.js";
 
 const router = Router();
 

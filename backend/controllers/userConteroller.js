@@ -6,6 +6,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
+import { v2 as cloudinary } from "cloudinary";
 
 export const convertProfileToPDF = async (userProfile) => {
   console.log("convertProfiletopdf ======", userProfile);
@@ -198,19 +199,69 @@ export const login = async (req, res) => {
 
 export const updateProfilePicture = async (req, res, next) => {
   const { token } = req.body;
+
+  console.log("=== PROFILE PICTURE UPLOAD DEBUG ===");
+  console.log("📸 req.file exists:", !!req.file);
+  if (req.file) {
+    console.log("📸 req.file.path (Cloudinary URL):", req.file.path);
+    console.log("📸 req.file.filename (public_id):", req.file.filename);
+    console.log("📸 Full req.file:", JSON.stringify(req.file, null, 2));
+  }
+
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: " Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user" });
     }
-    user.profilePicture = req.file.filename;
+
+    if (
+      user.profilePicture &&
+      user.profilePicture.includes("res.cloudinary.com")
+    ) {
+      try {
+        const urlParts = user.profilePicture.split("/");
+        const uploadIndex = urlParts.indexOf("upload");
+        const publicIdParts = urlParts.slice(uploadIndex + 2); // Skip 'upload' and version
+        const publicId = publicIdParts.join("/").split(".")[0]; // Remove extension
+
+        console.log(" Deleting old image with public_id:", publicId);
+        const deleteResult = await cloudinary.uploader.destroy(publicId);
+        console.log("🗑️ Delete result:", deleteResult);
+      } catch (deleteError) {
+        console.log("⚠️ Could not delete old image:", deleteError.message);
+      }
+    }
+
+    const cloudinaryUrl = req.file.path;
+    console.log("Saving URL to database:", cloudinaryUrl);
+
+    user.profilePicture = cloudinaryUrl;
     await user.save();
-    return res.status(200).json({ message: "Profile picture updated." });
+
+    console.log(" Profile picture updated successfully");
+    console.log(" New profilePicture in DB:", user.profilePicture);
+
+    return res.status(200).json({
+      message: "Profile picture updated ra puka",
+      profilePicture: user.profilePicture,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+      },
+    });
   } catch (error) {
-    console.error("Profile picture update error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during profile picture update." });
+    console.error(" Profile picture update error:", error);
+    return res.status(500).json({
+      message: "Server error during profile picture update.",
+      error: error.message,
+    });
   }
 };
 
