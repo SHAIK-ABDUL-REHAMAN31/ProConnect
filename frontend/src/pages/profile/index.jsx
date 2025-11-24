@@ -20,11 +20,21 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [inputData, setInputData] = useState({
     company: "",
     position: "",
     years: "",
   });
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath)
+      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return `${BASE_URL}/${imagePath}`;
+  };
 
   const handleWorkInputData = (e) => {
     const { name, value } = e.target;
@@ -33,31 +43,26 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) dispatch(getAboutUser({ token }));
-    dispatch(getAllPosts({ token }));
-  }, [dispatch]);
+    if (token) {
+      dispatch(getAboutUser({ token }));
+      dispatch(getAllPosts());
+    }
+  }, []);
 
   useEffect(() => {
     if (authState?.user) {
-      console.log(" User profile fetched:", authState.user);
       setUserProfile(authState.user);
-    } else {
-      console.log(" authState.user not yet available:", authState.user);
     }
+  }, [authState.user]);
 
-    if (authState.user) {
-      let post = postReducer.posts.filter((post) => {
-        return post.userId.username === authState.user.userId.username;
-      });
-      console.log("posts from useEffect : ", post);
-      setUserPosts(post);
+  useEffect(() => {
+    if (authState?.user && postReducer.posts.length > 0) {
+      const filteredPosts = postReducer.posts.filter(
+        (post) => post.userId.username === authState.user.userId.username
+      );
+      setUserPosts(filteredPosts);
     }
-  }, [authState.user, postReducer.posts]);
-
-  //userPosts
-  useEffect(() => {}, [postReducer.posts]);
-
-  //loading
+  }, [authState?.user?.userId?.username, postReducer.posts]);
 
   if (!userProfile) {
     return (
@@ -72,36 +77,75 @@ export default function ProfilePage() {
   const { userId, bio, pastWork } = userProfile;
 
   const updateUserProfilePicture = async (file) => {
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image (JPG, PNG, or WebP)");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size should be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+
     const formData = new FormData();
     formData.append("profile_picture", file);
     formData.append("token", localStorage.getItem("token"));
 
-    const respone = await clientServer.post(
-      "/update_profile_picture",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    console.log("📤 Uploading file:", file.name);
+
+    try {
+      const response = await clientServer.post(
+        "/profile_picture_update",
+        formData
+      );
+
+      console.log("✅ Backend response:", response.data);
+
+      if (response.status === 200 && response.data.message) {
+        const token = localStorage.getItem("token");
+        await dispatch(getAboutUser({ token }));
+      } else {
+        throw new Error("Upload failed");
       }
-    );
-    dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+    } catch (error) {
+      console.error("❌ Upload failed:", error);
+      console.error("❌ Backend error:", error.response?.data);
+      alert(
+        error.response?.data?.message ||
+          "Failed to upload profile picture. Please try again."
+      );
+    } finally {
+      setUploading(false);
+    }
   };
-
   const updateUserProfileData = async () => {
-    const request = await clientServer.post("/update_user_profile", {
-      token: localStorage.getItem("token"),
-      name: userProfile.userId.name,
-    });
+    try {
+      await clientServer.post("/update_user_profile", {
+        token: localStorage.getItem("token"),
+        name: userProfile.userId.name,
+      });
 
-    const respone = await clientServer.post("/update_user_data", {
-      token: localStorage.getItem("token"),
-      bio: userProfile.bio,
-      currentPost: userProfile.currentPost,
-      pastWork: userProfile.pastWork,
-      education: userProfile.education,
-    });
-    dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+      await clientServer.post("/update_user_data", {
+        token: localStorage.getItem("token"),
+        bio: userProfile.bio,
+        currentPost: userProfile.currentPost,
+        pastWork: userProfile.pastWork,
+        education: userProfile.education,
+      });
+
+      const token = localStorage.getItem("token");
+      await dispatch(getAboutUser({ token }));
+
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Profile update error:", error);
+      alert("Failed to update profile. Please try again.");
+    }
   };
 
   return (
@@ -112,22 +156,43 @@ export default function ProfilePage() {
             <label
               htmlFor="profilePictureUpload"
               className={styles.backDropContainer_profilOverLay}
+              style={{ cursor: uploading ? "not-allowed" : "pointer" }}
             >
-              <p>Edit</p>
+              <p>{uploading ? "Uploading..." : "Edit"}</p>
             </label>
             <input
               onChange={(e) => {
                 updateUserProfilePicture(e.target.files[0]);
               }}
               type="file"
+              accept="image/*"
               id="profilePictureUpload"
+              name="profile_picture"
               hidden
+              disabled={uploading}
             />
             <img
               className={styles.profile_picture}
-              src={`${BASE_URL}/${userId?.profilePicture}`}
+              src={getImageUrl(userId?.profilePicture)}
               alt="Profile"
             />
+            {uploading && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  background: "rgba(0,0,0,0.7)",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "8px",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Uploading...
+              </div>
+            )}
           </div>
 
           <div className={styles.profileContainer_details}>
@@ -149,13 +214,13 @@ export default function ProfilePage() {
                     }}
                     type="text"
                     className={styles.nameEdit}
-                    value={userId?.name}
+                    value={userId?.name || ""}
                   />
                 </div>
                 <div className={styles.bioText}>
                   <p>@{userId?.username}</p>
                   <textarea
-                    value={bio}
+                    value={bio || ""}
                     onChange={(e) => {
                       setUserProfile({ ...userProfile, bio: e.target.value });
                       e.target.style.height = "auto";
@@ -164,7 +229,7 @@ export default function ProfilePage() {
                     maxLength={220}
                     placeholder="Write something about yourself..."
                   />
-                  <p className={styles.BioClass}>{bio.length}/220</p>
+                  <p className={styles.BioClass}>{(bio || "").length}/220</p>
                 </div>
               </div>
 
@@ -180,7 +245,7 @@ export default function ProfilePage() {
                       <div className={styles.postCard_profileContainer}>
                         {userPosts[0].media ? (
                           <img
-                            src={`${BASE_URL}/${userPosts[0].media}`}
+                            src={getImageUrl(userPosts[0].media)}
                             alt="Post"
                           />
                         ) : (
@@ -200,20 +265,10 @@ export default function ProfilePage() {
           </div>
 
           {userProfile != authState.user && (
-            <div
-              onClick={(e) => {
-                updateUserProfileData();
-              }}
-            >
+            <div onClick={() => updateUserProfileData()}>
               <button className={styles.acceptButton}>Update Profile</button>
             </div>
           )}
-          {/* <button
-                className={styles.AddWorkButton}
-                onClick={() => setIsModalOpen(true)}
-              >
-                Add Your Work
-              </button> */}
 
           <div className={styles.WorkHistory}>
             <div className={styles.workHistoryTag_btn}>
@@ -283,7 +338,7 @@ export default function ProfilePage() {
                           )}
                         </div>
                         {post.media ? (
-                          <img src={`${BASE_URL}/${post.media}`} alt="Post" />
+                          <img src={getImageUrl(post.media)} alt="Post" />
                         ) : (
                           <div
                             style={{ width: "3.4rem", height: "3.4rem" }}
@@ -299,15 +354,14 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
         {isModalOpen && (
           <div
             className={styles.CommentsContainer}
             onClick={() => setIsModalOpen(false)}
           >
             <div
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+              onClick={(e) => e.stopPropagation()}
               className={styles.allCommentsContainer}
             >
               <h3 style={{ padding: "1rem" }}>Work History</h3>
@@ -317,6 +371,7 @@ export default function ProfilePage() {
                 className={styles.inputField}
                 placeholder="Enter Company Name"
                 type="text"
+                value={inputData.company}
               />
               <input
                 onChange={handleWorkInputData}
@@ -324,6 +379,7 @@ export default function ProfilePage() {
                 className={styles.inputField}
                 placeholder="Enter Position"
                 type="text"
+                value={inputData.position}
               />
               <input
                 onChange={handleWorkInputData}
@@ -331,13 +387,15 @@ export default function ProfilePage() {
                 className={styles.inputField}
                 placeholder="Years"
                 type="number"
+                value={inputData.years}
               />
               <button
                 onClick={() => {
                   setUserProfile({
                     ...userProfile,
-                    pastWork: [...userProfile.pastWork, inputData],
+                    pastWork: [...(userProfile.pastWork || []), inputData],
                   });
+                  setInputData({ company: "", position: "", years: "" });
                   setIsModalOpen(false);
                 }}
                 className={styles.postCommmentContainer_postBtn}

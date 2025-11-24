@@ -10,7 +10,7 @@ import {
 } from "@/config/redux/action/postAction";
 import UserLayout from "@/layout/UserLayout";
 import { useRouter } from "next/router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // ✅ Add useRef
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./dashBoard.module.css";
 import DashBoardLayout from "@/layout/dashboardLayout";
@@ -23,11 +23,42 @@ export default function DashBoardComponent() {
   const authState = useSelector((state) => state.auth);
   const postState = useSelector((state) => state.postReducer);
 
+  // ✅ ADD THIS: Prevent duplicate fetches
+  const hasFetchedData = useRef(false);
+
+  const [postContent, setPostContent] = useState("");
+  const [fileContent, setFileContent] = useState();
+  const [postComment, setPostComment] = useState("");
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath)
+      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return `${BASE_URL}/${imagePath}`;
+  };
+
   useEffect(() => {
+    if (hasFetchedData.current) {
+      console.log("⏭️ Skipping duplicate fetch");
+      return;
+    }
+
+    console.log("🚀 Initial data fetch");
+
     const token = localStorage.getItem("token");
     const userString = localStorage.getItem("user");
 
-    const savedUser = userString ? JSON.parse(userString) : null;
+    let savedUser = null;
+
+    if (userString) {
+      try {
+        savedUser = JSON.parse(userString);
+      } catch (e) {
+        localStorage.removeItem("user");
+      }
+    }
 
     if (savedUser && !authState.user) {
       dispatch({ type: "SET_USER", payload: savedUser });
@@ -37,19 +68,17 @@ export default function DashBoardComponent() {
       dispatch(getAboutUser({ token }));
       dispatch(getAllPosts());
       dispatch(getAllUsers());
+      hasFetchedData.current = true;
+      console.log("✅ Data fetched, flag set");
     }
   }, []);
-
-  const [postContent, setPostContent] = useState("");
-  const [fileContent, setFileContent] = useState();
-  const [postComment, setPostComment] = useState("");
 
   const handleUpload = async () => {
     await dispatch(createPost({ media: fileContent, body: postContent }));
     console.log("file :", fileContent, "body:", postContent);
     setPostContent("");
     setFileContent(null);
-    dispatch(getAllPosts());
+    await dispatch(getAllPosts());
   };
 
   if (authState.user) {
@@ -63,7 +92,7 @@ export default function DashBoardComponent() {
                 <div className={styles.createPostHeader}>
                   <img
                     className={styles.CreatePostConatiner_image}
-                    src={`${BASE_URL}/${authState.user.userId.profilePicture}`}
+                    src={getImageUrl(authState.user.userId.profilePicture)}
                     alt="Profile"
                   />
                   <textarea
@@ -137,7 +166,7 @@ export default function DashBoardComponent() {
                           onClick={() =>
                             router.push(`/view_profile/${post.userId.username}`)
                           }
-                          src={`${BASE_URL}/${post.userId.profilePicture}`}
+                          src={getImageUrl(post.userId.profilePicture)}
                           alt={post.userId.name}
                         />
                         <div className={styles.userInfo}>
@@ -179,11 +208,7 @@ export default function DashBoardComponent() {
                       {post.media && (
                         <div className={styles.singlecardImage}>
                           <img
-                            src={
-                              post.media.startsWith("http")
-                                ? post.media
-                                : `${BASE_URL}/${post.media}`
-                            }
+                            src={getImageUrl(post.media)}
                             alt="Post content"
                           />
                         </div>
@@ -328,7 +353,7 @@ export default function DashBoardComponent() {
                         >
                           <img
                             className={styles.UserPostedComment_Profile_image}
-                            src={`${BASE_URL}/${postComment.userId.profilePicture}`}
+                            src={getImageUrl(postComment.userId.profilePicture)}
                             alt={postComment.userId.username}
                           />
                         </div>

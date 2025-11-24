@@ -219,18 +219,18 @@ export default function ViewProfilePage({ userProfile }) {
 export async function getServerSideProps(context) {
   try {
     const username = context.query.username;
-    console.log("🚀 getServerSideProps received username:", username);
+    console.log(" getServerSideProps received username:", username);
 
     const response = await clientServer.get(
       "/user/get_userProfile_basedOn_username",
       { params: { username } }
     );
 
-    console.log("✅ API response:", response.data);
+    console.log(" API response:", response.data);
 
     return { props: { userProfile: response.data.userProfile } };
   } catch (error) {
-    console.error("❌ SSR Error:", error.response?.data || error.message);
+    console.error(" SSR Error:", error.response?.data || error.message);
     return { props: { userProfile: null, error: "User not found" } };
   }
 }
