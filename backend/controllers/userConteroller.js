@@ -129,7 +129,6 @@ export const register = async (req, res) => {
 
     const emailLower = email.trim().toLowerCase();
 
-    // ✅ Check existing users
     const userExists = await User.findOne({ email: emailLower });
     if (userExists) {
       return res.status(400).json({ message: "User already exists." });
@@ -200,14 +199,6 @@ export const login = async (req, res) => {
 export const updateProfilePicture = async (req, res, next) => {
   const { token } = req.body;
 
-  console.log("=== PROFILE PICTURE UPLOAD DEBUG ===");
-  console.log("📸 req.file exists:", !!req.file);
-  if (req.file) {
-    console.log("📸 req.file.path (Cloudinary URL):", req.file.path);
-    console.log("📸 req.file.filename (public_id):", req.file.filename);
-    console.log("📸 Full req.file:", JSON.stringify(req.file, null, 2));
-  }
-
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -225,28 +216,24 @@ export const updateProfilePicture = async (req, res, next) => {
       try {
         const urlParts = user.profilePicture.split("/");
         const uploadIndex = urlParts.indexOf("upload");
-        const publicIdParts = urlParts.slice(uploadIndex + 2); // Skip 'upload' and version
-        const publicId = publicIdParts.join("/").split(".")[0]; // Remove extension
+        const publicIdParts = urlParts.slice(uploadIndex + 2);
+        const publicId = publicIdParts.join("/").split(".")[0];
 
         console.log(" Deleting old image with public_id:", publicId);
         const deleteResult = await cloudinary.uploader.destroy(publicId);
-        console.log("🗑️ Delete result:", deleteResult);
+        console.log(" Delete result:", deleteResult);
       } catch (deleteError) {
-        console.log("⚠️ Could not delete old image:", deleteError.message);
+        console.log("Could not delete old image:", deleteError.message);
       }
     }
 
     const cloudinaryUrl = req.file.path;
-    console.log("Saving URL to database:", cloudinaryUrl);
 
     user.profilePicture = cloudinaryUrl;
     await user.save();
 
-    console.log(" Profile picture updated successfully");
-    console.log(" New profilePicture in DB:", user.profilePicture);
-
     return res.status(200).json({
-      message: "Profile picture updated ra puka",
+      message: "Profile picture updated successfully",
       profilePicture: user.profilePicture,
       user: {
         _id: user._id,
@@ -471,6 +458,8 @@ export const whatAreMyConnections = async (req, res) => {
 
 export const acceptConnectionRequest = async (req, res) => {
   const { token, requestId, action_type } = req.body;
+  console.log("action_type ===== ", action_type);
+  console.log("token form acceptConnectionRequest", token);
   try {
     const user = await User.findOne({ token: token });
     if (!user) {
@@ -503,7 +492,6 @@ export const acceptConnectionRequest = async (req, res) => {
 
 export const getuserProfileBasedOnUsername = async (req, res) => {
   try {
-    // Sanitize and normalize the incoming username parameter
     const incomingRaw = decodeURIComponent(req.query.username || "");
     const incoming = incomingRaw.trim().toLowerCase();
     console.log(
@@ -544,10 +532,10 @@ export const getuserProfileBasedOnUsername = async (req, res) => {
     }
 
     // Success logging
-    console.log("✅ From ServerSide:", matchedUser.username);
+    console.log("From ServerSide:", matchedUser.username);
     res.status(200).json({ userProfile });
   } catch (error) {
-    console.error("❌ Server error:", error);
+    console.error(" Server error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

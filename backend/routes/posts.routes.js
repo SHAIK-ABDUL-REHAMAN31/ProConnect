@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { ActiveCheck } from "../controllers/postsRoutesController.js";
+import {
+  ActiveCheck,
+  disLikePost,
+} from "../controllers/postsRoutesController.js";
 import { createPost } from "../controllers/postsRoutesController.js";
 import { getAllPosts } from "../controllers/postsRoutesController.js";
 import { deletePost } from "../controllers/postsRoutesController.js";
@@ -19,5 +22,6 @@ router.route("/comment_on_post").post(commentOnpost);
 router.route("/comments_on_post").get(getCommentsOnPost);
 router.route("/delete_user_comment").delete(deleteUserComment);
 router.route("/like_post").post(likePost);
+router.route("/disLike_post").post(disLikePost);
 
 export default router;

@@ -194,3 +194,23 @@ export const likePost = async (req, res) => {
       .json({ message: "Server error during liking post." });
   }
 };
+
+export const disLikePost = async (req, res) => {
+  const { postId } = req.body;
+  try {
+    const post = await Post.findOne({ _id: postId });
+    if (!post) {
+      return res.status(404).json({ message: "Post not found." });
+    }
+    post.likes = Math.max(0, post.likes - 1);
+    await post.save();
+    return res
+      .status(200)
+      .json({ message: "Post liked successfully.", likes: post.likes });
+  } catch (error) {
+    console.error("Like post error:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error during liking post." });
+  }
+};
