@@ -23,7 +23,15 @@ export default function MyConnectionsPage() {
   }, []);
 
   const connections = authState.connectionRequests || [];
-  console.log(authState.connectionRequests);
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath)
+      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+  };
 
   return (
     <UserLayout>
@@ -33,7 +41,7 @@ export default function MyConnectionsPage() {
 
           {/* Pending Requests */}
           {connections
-            .filter((c) => c.status_accepted == null)
+            .filter((c) => c.status_accepted == false)
             .map((req, i) => (
               <div
                 key={i}
@@ -51,7 +59,7 @@ export default function MyConnectionsPage() {
                 >
                   <img
                     className={styles.userProfilePic}
-                    src={`${BASE_URL}/${req.userId.profilePicture}`}
+                    src={getImageUrl(req.userId.profilePicture)}
                     alt="/"
                   />
                   <div className={styles.userInfo}>
@@ -104,7 +112,7 @@ export default function MyConnectionsPage() {
                   >
                     <img
                       className={styles.userProfilePic}
-                      src={`${BASE_URL}/${otherUser.profilePicture}`}
+                      src={getImageUrl(otherUser.profilePicture)}
                       alt={otherUser.name}
                     />
                     <div className={styles.userInfo}>

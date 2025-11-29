@@ -2,8 +2,13 @@ import {
   deletePost,
   getAboutUser,
   getAllPosts,
+  incrementLike,
+  decrementLike,
+  getAllComents,
+  postOnComment,
 } from "@/config/redux/action/postAction";
 import DashBoardLayout from "@/layout/dashboardLayout";
+import { resetPostId } from "@/config/redux/reducre/postReducer";
 import UserLayout from "@/layout/UserLayout";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -26,15 +31,24 @@ export default function ProfilePage() {
     position: "",
     years: "",
   });
+  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [likingPosts, setLikingPosts] = useState(new Set());
+  const [postComment, setPostComment] = useState("");
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath)
-      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
-    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-      return imagePath;
+  useEffect(() => {
+    const savedLikes = localStorage.getItem("likedPosts");
+    if (savedLikes) {
+      try {
+        setLikedPosts(new Set(JSON.parse(savedLikes)));
+      } catch (e) {
+        console.error("Error loading liked posts:", e);
+      }
     }
-    return `${BASE_URL}/${imagePath}`;
-  };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("likedPosts", JSON.stringify([...likedPosts]));
+  }, [likedPosts]);
 
   const handleWorkInputData = (e) => {
     const { name, value } = e.target;
@@ -68,7 +82,10 @@ export default function ProfilePage() {
     return (
       <UserLayout>
         <DashBoardLayout>
-          <div style={{ padding: "2rem" }}>Loading profile...</div>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <h3>Loading...</h3>
+          </div>
         </DashBoardLayout>
       </UserLayout>
     );
@@ -104,8 +121,6 @@ export default function ProfilePage() {
         formData
       );
 
-      console.log("✅ Backend response:", response.data);
-
       if (response.status === 200 && response.data.message) {
         const token = localStorage.getItem("token");
         await dispatch(getAboutUser({ token }));
@@ -113,8 +128,8 @@ export default function ProfilePage() {
         throw new Error("Upload failed");
       }
     } catch (error) {
-      console.error("❌ Upload failed:", error);
-      console.error("❌ Backend error:", error.response?.data);
+      console.error(" Upload failed:", error);
+      console.error(" Backend error:", error.response?.data);
       alert(
         error.response?.data?.message ||
           "Failed to upload profile picture. Please try again."
@@ -146,6 +161,15 @@ export default function ProfilePage() {
       console.error("Profile update error:", error);
       alert("Failed to update profile. Please try again.");
     }
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath)
+      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
   };
 
   return (
@@ -301,49 +325,197 @@ export default function ProfilePage() {
                 userPosts.map((post) => (
                   <div key={post._id} className={styles.singlecard}>
                     <div className={styles.singlecard_profileContainer}>
-                      <div className={styles.singlecardImage}>
-                        <h3>@{post.userId.username}</h3>
-                        <div className={styles.body_deletebtn}>
-                          <p>{post.body}</p>
-                          {post.userId._id === authState.user.userId._id && (
-                            <div
-                              className={styles.deleteBtn}
-                              onClick={async () => {
-                                await dispatch(
-                                  deletePost({ post_id: post._id })
-                                );
-                                await dispatch(getAllPosts());
-                              }}
-                            >
-                              <svg
-                                style={{
-                                  height: "1.4em",
-                                  color: "red",
-                                  cursor: "pointer",
-                                }}
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className={styles.icon}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                                />
-                              </svg>
-                            </div>
-                          )}
+                      <img
+                        onClick={() => router.push("/profile")}
+                        src={getImageUrl(post.userId.profilePicture)}
+                        alt={post.userId.name}
+                      />
+                      <div className={styles.userInfo}>
+                        <p className={styles.userName}>{post.userId.name}</p>
+                        <p className={styles.userHandle}>
+                          @{post.userId.username}
+                        </p>
+                      </div>
+
+                      {post.userId._id === authState.user.userId._id && (
+                        <div
+                          className={styles.deleteButton}
+                          onClick={async () => {
+                            await dispatch(deletePost({ post_id: post._id }));
+                            await dispatch(getAllPosts());
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            width="20"
+                            height="20"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                            />
+                          </svg>
                         </div>
-                        {post.media ? (
-                          <img src={getImageUrl(post.media)} alt="Post" />
-                        ) : (
-                          <div
-                            style={{ width: "3.4rem", height: "3.4rem" }}
-                          ></div>
-                        )}
+                      )}
+                    </div>
+
+                    <p className={styles.postContent}>{post.body}</p>
+
+                    {post.media && (
+                      <div className={styles.singlecardImage}>
+                        <img src={getImageUrl(post.media)} alt="Post content" />
+                      </div>
+                    )}
+
+                    <div className={styles.optionsContainer}>
+                      <div
+                        className={styles.SingleOptionContainer}
+                        onClick={async () => {
+                          if (likingPosts.has(post._id)) return;
+
+                          const isCurrentlyLiked = likedPosts.has(post._id);
+
+                          try {
+                            setLikingPosts((prev) =>
+                              new Set(prev).add(post._id)
+                            );
+
+                            if (isCurrentlyLiked) {
+                              setLikedPosts((prev) => {
+                                const newSet = new Set(prev);
+                                newSet.delete(post._id);
+                                return newSet;
+                              });
+                              await dispatch(
+                                decrementLike({ post_id: post._id })
+                              );
+                            } else {
+                              setLikedPosts((prev) =>
+                                new Set(prev).add(post._id)
+                              );
+                              await dispatch(
+                                incrementLike({ post_id: post._id })
+                              );
+                            }
+
+                            await dispatch(getAllPosts());
+                          } catch (error) {
+                            console.error("Failed to toggle like:", error);
+
+                            if (isCurrentlyLiked) {
+                              setLikedPosts((prev) =>
+                                new Set(prev).add(post._id)
+                              );
+                            } else {
+                              setLikedPosts((prev) => {
+                                const newSet = new Set(prev);
+                                newSet.delete(post._id);
+                                return newSet;
+                              });
+                            }
+                          } finally {
+                            setLikingPosts((prev) => {
+                              const newSet = new Set(prev);
+                              newSet.delete(post._id);
+                              return newSet;
+                            });
+                          }
+                        }}
+                        style={{
+                          opacity: likingPosts.has(post._id) ? 0.6 : 1,
+                          cursor: likingPosts.has(post._id)
+                            ? "not-allowed"
+                            : "pointer",
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill={
+                            likedPosts.has(post._id) ? "currentColor" : "none"
+                          }
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          style={{
+                            transition: "all 0.2s ease",
+                            color: likedPosts.has(post._id)
+                              ? "#ef4444"
+                              : "currentColor",
+                          }}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                          />
+                        </svg>
+                        <span
+                          className={styles.likeCount}
+                          style={{
+                            color: likedPosts.has(post._id)
+                              ? "#ef4444"
+                              : "inherit",
+                            fontWeight: likedPosts.has(post._id)
+                              ? "600"
+                              : "400",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {post.likes}
+                        </span>
+                      </div>
+
+                      <div
+                        className={styles.SingleOptionContainer}
+                        onClick={async () => {
+                          await dispatch(getAllComents({ post_id: post._id }));
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"
+                          />
+                        </svg>
+                        <span>Comment</span>
+                      </div>
+
+                      <div
+                        className={styles.SingleOptionContainer}
+                        onClick={() => {
+                          const text = encodeURIComponent(post.body);
+                          const url = encodeURIComponent("ProConnnect.in");
+                          window.open(
+                            `https://twitter.com/intent/tweet?text=${text}&url=${url}`
+                          );
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                          />
+                        </svg>
+                        <span>Share</span>
                       </div>
                     </div>
                   </div>
@@ -402,6 +574,109 @@ export default function ProfilePage() {
               >
                 Add Work
               </button>
+            </div>
+          </div>
+        )}
+
+        {postReducer.postId !== "" && (
+          <div
+            className={styles.CommentsContainer}
+            onClick={() => dispatch(resetPostId())}
+          >
+            <div
+              className={styles.allCommentsContainer}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.commentsHeader}>
+                <h2>Comments</h2>
+                <div
+                  className={styles.closeButton}
+                  onClick={() => dispatch(resetPostId())}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    width="24"
+                    height="24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div className={styles.mainUserPostedConatiner}>
+                {postReducer.comments.length === 0 ? (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#64748b",
+                      marginTop: "2rem",
+                    }}
+                  >
+                    No comments yet. Be the first to comment!
+                  </p>
+                ) : (
+                  postReducer.comments.map((postComment) => (
+                    <div
+                      key={postComment._id}
+                      className={styles.UserPostedComment_Container}
+                    >
+                      <div
+                        className={styles.UserPostedComment_Profile_Container}
+                      >
+                        <img
+                          className={styles.UserPostedComment_Profile_image}
+                          src={getImageUrl(postComment.userId.profilePicture)}
+                          alt={postComment.userId.username}
+                        />
+                      </div>
+                      <div
+                        className={styles.UserPostedComment_UserDataContainer}
+                      >
+                        <p className={styles.commentUser}>
+                          @{postComment.userId.username}
+                        </p>
+                        <p className={styles.commentBody}>
+                          {postComment.commentBody}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className={styles.postCommmentContainer}>
+                <input
+                  placeholder="Write a comment..."
+                  onChange={(e) => setPostComment(e.target.value)}
+                  value={postComment}
+                />
+                <div
+                  onClick={async () => {
+                    if (!postComment.trim()) return;
+                    await dispatch(
+                      postOnComment({
+                        post_id: postReducer.postId,
+                        body: postComment,
+                      })
+                    );
+                    setPostComment("");
+                    await dispatch(
+                      getAllComents({ post_id: postReducer.postId })
+                    );
+                  }}
+                  className={styles.postCommmentContainer_postBtn}
+                >
+                  Post
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -6,11 +6,12 @@ import {
   getAllPosts,
   getAllUsers,
   incrementLike,
+  decrementLike,
   postOnComment,
 } from "@/config/redux/action/postAction";
 import UserLayout from "@/layout/UserLayout";
 import { useRouter } from "next/router";
-import React, { useState, useEffect, useRef } from "react"; // ✅ Add useRef
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./dashBoard.module.css";
 import DashBoardLayout from "@/layout/dashboardLayout";
@@ -23,12 +24,28 @@ export default function DashBoardComponent() {
   const authState = useSelector((state) => state.auth);
   const postState = useSelector((state) => state.postReducer);
 
-  // ✅ ADD THIS: Prevent duplicate fetches
   const hasFetchedData = useRef(false);
 
   const [postContent, setPostContent] = useState("");
   const [fileContent, setFileContent] = useState();
   const [postComment, setPostComment] = useState("");
+  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [likingPosts, setLikingPosts] = useState(new Set());
+
+  useEffect(() => {
+    const savedLikes = localStorage.getItem("likedPosts");
+    if (savedLikes) {
+      try {
+        setLikedPosts(new Set(JSON.parse(savedLikes)));
+      } catch (e) {
+        console.error("Error loading liked posts:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("likedPosts", JSON.stringify([...likedPosts]));
+  }, [likedPosts]);
 
   const getImageUrl = (imagePath) => {
     if (!imagePath)
@@ -36,16 +53,13 @@ export default function DashBoardComponent() {
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
       return imagePath;
     }
-    return `${BASE_URL}/${imagePath}`;
+    return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
   };
 
   useEffect(() => {
     if (hasFetchedData.current) {
-      console.log("⏭️ Skipping duplicate fetch");
       return;
     }
-
-    console.log("🚀 Initial data fetch");
 
     const token = localStorage.getItem("token");
     const userString = localStorage.getItem("user");
@@ -69,13 +83,11 @@ export default function DashBoardComponent() {
       dispatch(getAllPosts());
       dispatch(getAllUsers());
       hasFetchedData.current = true;
-      console.log("✅ Data fetched, flag set");
     }
   }, []);
 
   const handleUpload = async () => {
     await dispatch(createPost({ media: fileContent, body: postContent }));
-    console.log("file :", fileContent, "body:", postContent);
     setPostContent("");
     setFileContent(null);
     await dispatch(getAllPosts());
@@ -163,9 +175,18 @@ export default function DashBoardComponent() {
                     <div key={post._id} className={styles.singlecard}>
                       <div className={styles.singlecard_profileContainer}>
                         <img
-                          onClick={() =>
-                            router.push(`/view_profile/${post.userId.username}`)
-                          }
+                          onClick={() => {
+                            if (
+                              post.userId.username ===
+                              authState.user.userId.username
+                            ) {
+                              router.push("/profile");
+                            } else {
+                              router.push(
+                                `/view_profile/${post.userId.username}`
+                              );
+                            }
+                          }}
                           src={getImageUrl(post.userId.profilePicture)}
                           alt={post.userId.name}
                         />
@@ -218,18 +239,77 @@ export default function DashBoardComponent() {
                         <div
                           className={styles.SingleOptionContainer}
                           onClick={async () => {
-                            await dispatch(
-                              incrementLike({ post_id: post._id })
-                            );
-                            await dispatch(getAllPosts());
+                            if (likingPosts.has(post._id)) return;
+
+                            const isCurrentlyLiked = likedPosts.has(post._id);
+
+                            try {
+                              setLikingPosts((prev) =>
+                                new Set(prev).add(post._id)
+                              );
+
+                              if (isCurrentlyLiked) {
+                                setLikedPosts((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(post._id);
+                                  return newSet;
+                                });
+                                await dispatch(
+                                  decrementLike({ post_id: post._id })
+                                );
+                              } else {
+                                setLikedPosts((prev) =>
+                                  new Set(prev).add(post._id)
+                                );
+                                await dispatch(
+                                  incrementLike({ post_id: post._id })
+                                );
+                              }
+
+                              await dispatch(getAllPosts());
+                            } catch (error) {
+                              console.error("Failed to toggle like:", error);
+
+                              if (isCurrentlyLiked) {
+                                setLikedPosts((prev) =>
+                                  new Set(prev).add(post._id)
+                                );
+                              } else {
+                                setLikedPosts((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(post._id);
+                                  return newSet;
+                                });
+                              }
+                            } finally {
+                              setLikingPosts((prev) => {
+                                const newSet = new Set(prev);
+                                newSet.delete(post._id);
+                                return newSet;
+                              });
+                            }
+                          }}
+                          style={{
+                            opacity: likingPosts.has(post._id) ? 0.6 : 1,
+                            cursor: likingPosts.has(post._id)
+                              ? "not-allowed"
+                              : "pointer",
                           }}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            fill={post.likes > 0 ? "currentColor" : "none"}
+                            fill={
+                              likedPosts.has(post._id) ? "currentColor" : "none"
+                            }
                             viewBox="0 0 24 24"
                             strokeWidth={1.5}
                             stroke="currentColor"
+                            style={{
+                              transition: "all 0.2s ease",
+                              color: likedPosts.has(post._id)
+                                ? "#ef4444"
+                                : "currentColor",
+                            }}
                           >
                             <path
                               strokeLinecap="round"
@@ -237,7 +317,20 @@ export default function DashBoardComponent() {
                               d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
                             />
                           </svg>
-                          <span className={styles.likeCount}>{post.likes}</span>
+                          <span
+                            className={styles.likeCount}
+                            style={{
+                              color: likedPosts.has(post._id)
+                                ? "#ef4444"
+                                : "inherit",
+                              fontWeight: likedPosts.has(post._id)
+                                ? "600"
+                                : "400",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {post.likes}
+                          </span>
                         </div>
 
                         <div
@@ -407,15 +500,9 @@ export default function DashBoardComponent() {
     return (
       <UserLayout>
         <DashBoardLayout>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100vh",
-            }}
-          >
-            <p>Loading...</p>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <h3>Loading...</h3>
           </div>
         </DashBoardLayout>
       </UserLayout>

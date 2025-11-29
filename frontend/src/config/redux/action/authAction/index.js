@@ -84,13 +84,9 @@ export const getMyConnectionsRequest = createAsyncThunk(
   "user/getMyConnectionsRequest",
   async (token, thunkAPI) => {
     try {
-      console.log("Token sent →", token);
-
       const response = await clientServer.get("/user/what_are_my_connections", {
         params: { token },
       });
-
-      console.log("Response from getMyConnections →", response.data);
 
       return response.data.connections; // array
     } catch (err) {
@@ -108,7 +104,7 @@ export const acceptConnection = createAsyncThunk(
         {
           token: user.token,
           requestId: user.connectionId,
-          action_type: user.action,
+          action_type: user.action_type,
         }
       );
       thunkAPI.dispatch(getConnectionsRequest({ token: user.token }));

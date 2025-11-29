@@ -100,6 +100,21 @@ export const incrementLike = createAsyncThunk(
   }
 );
 
+export const decrementLike = createAsyncThunk(
+  "/post/decrementLike",
+  async (post, thunkApi) => {
+    try {
+      const response = await clientServer.post("/disLike_post", {
+        postId: post.post_id,
+      });
+
+      return thunkApi.fulfillWithValue(response.data);
+    } catch (err) {
+      return thunkApi.rejectWithValue(err.response.data);
+    }
+  }
+);
+
 export const getAllComents = createAsyncThunk(
   "/post/getAllComments",
   async (postData, thunkApi) => {
@@ -123,7 +138,6 @@ export const getAllComents = createAsyncThunk(
 export const postOnComment = createAsyncThunk(
   "/post/PostOnComment",
   async (postData, thunkApi) => {
-    console.log(postData);
     try {
       const response = await clientServer.post("/comment_on_post", {
         token: localStorage.getItem("token"),

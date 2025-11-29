@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./dashLayout.module.css";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +37,61 @@ export default function DashBoardLayout({ children }) {
   const randomUsers = [...filteredUsers]
     .sort(() => Math.random() - 0.5)
     .slice(0, 5);
+
+  //extra conatiner details
+
+  const [interestedEvents, setInterestedEvents] = useState(new Set());
+
+  const trendingTopics = [
+    { id: 1, hashtag: "#WebDevelopment", posts: 1243 },
+    { id: 2, hashtag: "#ReactJS", posts: 892 },
+    { id: 3, hashtag: "#AI", posts: 756 },
+    { id: 4, hashtag: "#CloudComputing", posts: 634 },
+    { id: 5, hashtag: "#DevOps", posts: 521 },
+  ];
+
+  const upcomingEvents = [
+    {
+      id: 1,
+      title: "Tech Conference 2025",
+      date: "Dec 15, 2025",
+      time: "10:00 AM",
+      location: "Online",
+      attendees: 234,
+    },
+    {
+      id: 2,
+      title: "React Workshop",
+      date: "Dec 20, 2025",
+      time: "2:00 PM",
+      location: "New York, NY",
+      attendees: 89,
+    },
+    {
+      id: 3,
+      title: "Networking Meetup",
+      date: "Jan 5, 2026",
+      time: "6:00 PM",
+      location: "San Francisco, CA",
+      attendees: 156,
+    },
+  ];
+
+  const toggleInterest = (eventId) => {
+    setInterestedEvents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleTopicClick = (hashtag) => {
+    console.log("Clicked topic:", hashtag);
+  };
 
   return (
     <div className="container">
@@ -107,34 +162,159 @@ export default function DashBoardLayout({ children }) {
         </div>
         <div className={styles.homeContainer_feedContainer}>{children}</div>
         <div className={styles.homeContainer_extraContainer}>
-          <h3>Explore New People</h3>
+          <div className={styles.widgetsContainer}>
+            {/* Trending Topics */}
+            <div className={styles.widget}>
+              <div className={styles.widgetHeader}>
+                <h3 className={styles.widgetTitle}>Trending Topics</h3>
+              </div>
 
-          {authState.all_profiles_fetched ? (
-            randomUsers.length > 0 ? (
-              randomUsers.map((profile) => (
-                <div
-                  key={profile._id}
-                  className={styles.extraContainer}
-                  onClick={() =>
-                    router.push(`/view_profile/${profile.userId.username}`)
-                  }
-                >
-                  <img
-                    src={`${BASE_URL}/${profile.userId.profilePicture}`}
-                    alt="Profile"
-                  />
-                  <div style={{ textAlign: "start" }}>
-                    <p>@{profile.userId.username}</p>
-                    <p>{profile.userId.name}</p>
+              <div className={styles.topicsList}>
+                {trendingTopics.map((topic, index) => (
+                  <div
+                    key={topic.id}
+                    className={styles.topicItem}
+                    onClick={() => handleTopicClick(topic.hashtag)}
+                  >
+                    <div className={styles.topicRank}>{index + 1}</div>
+                    <div className={styles.topicContent}>
+                      <div className={styles.hashtag}>{topic.hashtag}</div>
+                      <div className={styles.postCount}>
+                        {topic.posts.toLocaleString()} posts
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p>No users to explore</p>
-            )
-          ) : (
-            <p>Loading...</p>
-          )}
+                ))}
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div className={styles.widget}>
+              <div className={styles.widgetHeader}>
+                <h3 className={styles.widgetTitle}>Upcoming Events</h3>
+              </div>
+
+              <div className={styles.eventsList}>
+                {upcomingEvents.map((event) => (
+                  <div key={event.id} className={styles.eventCard}>
+                    <div className={styles.eventDate}>
+                      <div className={styles.dateDay}>
+                        {new Date(event.date).getDate()}
+                      </div>
+                      <div className={styles.dateMonth}>
+                        {new Date(event.date).toLocaleDateString("en-US", {
+                          month: "short",
+                        })}
+                      </div>
+                    </div>
+
+                    <div className={styles.eventDetails}>
+                      <h4 className={styles.eventTitle}>{event.title}</h4>
+                      <div className={styles.eventInfo}>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                        >
+                          <circle
+                            cx="7"
+                            cy="7"
+                            r="5.5"
+                            stroke="#64748b"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                          <path
+                            d="M7 4v3l2 2"
+                            stroke="#64748b"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span>{event.time}</span>
+                      </div>
+                      <div className={styles.eventInfo}>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M7 1C4.24 1 2 3.24 2 6c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5z"
+                            stroke="#64748b"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                          <circle
+                            cx="7"
+                            cy="6"
+                            r="1.5"
+                            stroke="#64748b"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                        </svg>
+                        <span>{event.location}</span>
+                      </div>
+                      <div className={styles.attendees}>
+                        {event.attendees} people interested
+                      </div>
+
+                      <button
+                        className={`${styles.interestBtn} ${
+                          interestedEvents.has(event.id)
+                            ? styles.interestedBtn
+                            : ""
+                        }`}
+                        onClick={() => toggleInterest(event.id)}
+                      >
+                        {interestedEvents.has(event.id) ? (
+                          <>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M13 4L6 11L3 8"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            Interested
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M8 3v10M3 8h10"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            Interested?
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button className={styles.viewAllBtn}>View All Events</button>
+            </div>
+          </div>
         </div>
       </div>
       <div className={styles.mobileNavBar}>

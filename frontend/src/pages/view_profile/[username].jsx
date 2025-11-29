@@ -70,14 +70,23 @@ export default function ViewProfilePage({ userProfile }) {
     await dispatch(
       getConnectionsRequest({ token: localStorage.getItem("token") })
     );
-    await dispatch(
-      getMyConnectionsRequest({ token: localStorage.getItem("token") })
-    );
+
+    const token = localStorage.getItem("token");
+    await dispatch(getMyConnectionsRequest(token));
   };
 
   useEffect(() => {
     fetchUserRelatedData();
   }, []);
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath)
+      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+  };
 
   return (
     <UserLayout>
@@ -86,11 +95,7 @@ export default function ViewProfilePage({ userProfile }) {
           <div className={styles.backDropContainer}>
             <img
               className={styles.profile_picture}
-              src={
-                user?.profilePicture
-                  ? `${BASE_URL}/${user.profilePicture}`
-                  : "/default.jpg"
-              }
+              src={getImageUrl(user?.profilePicture)}
               alt="Profile"
             />
           </div>
@@ -135,7 +140,7 @@ export default function ViewProfilePage({ userProfile }) {
                         `/user/download_profile?id=${user._id}`
                       );
                       window.open(
-                        `${BASE_URL}/${response.data.message}`,
+                        `${BASE_URL}/uploads/${response.data.message}`,
                         "_blank"
                       );
                     }}
@@ -173,7 +178,7 @@ export default function ViewProfilePage({ userProfile }) {
                       <div className={styles.postCard_profileContainer}>
                         {userPosts[0].media ? (
                           <img
-                            src={`${BASE_URL}/${userPosts[0].media}`}
+                            src={getImageUrl(userPosts[0].media)}
                             alt="Post"
                           />
                         ) : (

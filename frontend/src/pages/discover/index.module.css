@@ -1,82 +1,313 @@
-.userCardContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.discoverContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
 }
-.userCard {
-  display: flex;
 
-  background: white;
-  align-items: center;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  width: 80%;
-  padding: 1rem 2rem;
-  transition: all 0.2s;
-  margin-bottom: 1rem;
-  transition: all 0.2s;
-  border: 1px solid rgb(122, 122, 122);
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
 }
-.userCard_img {
-  width: 45px;
-  height: 45px;
-  max-height: 45px;
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+.searchContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.searchBox {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.875rem 3rem 0.875rem 3rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 24px;
+  font-size: 0.938rem;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.searchInput:focus {
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.clearBtn {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
-  object-fit: cover;
+  transition: all 0.2s ease;
 }
-.userCard:hover {
-  transform: scale(1.005);
-  border: 1px solid black;
+
+.clearBtn:hover {
+  background: #f1f5f9;
+  color: #64748b;
 }
-.userCardDetails {
+
+.noResults {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
+  padding: 4rem 2rem;
+  text-align: center;
+}
 
-  padding: 0.5rem 0.8rem;
-  text-align: left;
+.noResults svg {
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.noResults h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.noResults p {
+  font-size: 1rem;
+  color: #64748b;
+  max-width: 400px;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+.profileCard {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.profileCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.06);
+  border-color: #0a66c2;
+}
+
+.cardHeader {
+  height: 70px;
+  position: relative;
+  background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+}
+
+.coverBg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 102, 194, 0.9) 0%,
+    rgba(0, 65, 130, 0.9) 100%
+  );
+}
+
+.cardBody {
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.avatarContainer {
+  position: relative;
+  margin-top: -40px;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.userInfo {
+  text-align: center;
+  margin-bottom: 1rem;
   width: 100%;
 }
 
-.userCardDetails h2 {
-  font-size: 1.1rem;
+.userName {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #222;
-  margin: 0;
-  word-break: break-word;
+  color: #000;
+  margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.userCardDetails p {
-  font-size: 0.9rem;
-  color: #555;
+.bio {
+  font-size: 0.875rem;
+  color: #2d2c2c;
   margin: 0;
-  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  max-height: 2.8em;
+}
+
+.connectBtn {
+  width: 100%;
+  padding: 0.625rem 1.5rem;
+  background: #fff;
+  color: #0a66c2;
+  border: 1.5px solid #0a66c2;
+  border-radius: 24px;
+  font-size: 0.938rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.connectBtn:hover {
+  background: #eff3f8;
+  border-color: #004182;
+  color: #004182;
+}
+
+.connectBtn:active {
+  transform: scale(0.98);
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #0a66c2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
-  .userCardDetails h2 {
-    font-size: 1rem;
+  .header h1 {
+    font-size: 1.75rem;
   }
 
-  .userCardDetails p {
-    font-size: 0.85rem;
+  .header p {
+    font-size: 0.938rem;
+  }
+
+  .cardsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .cardBody {
+    padding: 0 1rem 1rem;
   }
 }
 
-@media (max-width: 400px) {
-  .userCardDetails {
-    align-items: center;
-    text-align: center;
+@media (max-width: 480px) and (min-width: 320px) {
+  .discoverContainer {
+    padding: 1rem 0.5rem;
   }
 
-  .userCardDetails h2 {
-    font-size: 0.95rem;
-    text-align: start;
+  .header {
+    margin-bottom: 2rem;
   }
 
-  .userCardDetails p {
-    font-size: 0.8rem;
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .userName {
+    font-size: 1rem;
+  }
+
+  .userEmail {
+    font-size: 0.813rem;
+  }
+  .cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .connectBtn {
+    width: 100%;
+    padding: 0.625rem;
   }
 }

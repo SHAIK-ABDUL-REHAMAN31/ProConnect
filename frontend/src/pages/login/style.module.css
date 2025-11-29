@@ -98,18 +98,20 @@
   padding: 1rem;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  background-size: 200% auto;
   color: white;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
 }
 
 .submitButton button:hover {
+  background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 10px rgba(139, 92, 246, 0.5);
 }
 
 .submitButton button:active {
@@ -211,13 +213,168 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .container {
-    padding: 1rem;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cardContainer {
+    width: 90%;
+    height: auto;
+    max-height: 85vh;
+    max-width: none;
+    min-height: auto;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border-radius: 20px;
+    margin: 0;
+    overflow-y: auto;
+  }
+
+  /* Hide scrollbar */
+  .cardContainer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cardContainer {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .cardContainer_left {
+    flex: 1;
+    padding: 1.5rem;
+    background: transparent;
+    justify-content: center;
+    overflow-y: auto;
+  }
+
+  .cardLeftHeading {
+    font-size: 1.8rem;
+    text-align: center;
+    color: white;
+    background: none;
+    -webkit-text-fill-color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  .subHeading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .inputContainers {
+    gap: 1rem;
   }
 
   .inputRow1 {
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
+  }
+
+  .inputField {
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+
+  .inputField::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .inputField:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+  }
+
+  .submitButton button {
+    padding: 0.8rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+    background-size: 200% auto;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    color: white;
+  }
+
+  .cardContainer_right {
+    display: flex;
+    padding: 1rem;
+    flex: 0 0 auto;
+    background: transparent;
+    min-height: auto;
+  }
+
+  .cardContainer_right::before {
+    display: none;
+  }
+
+  .rightContent h2 {
+    display: none;
+  }
+
+  .rightContent p {
+    display: none;
+  }
+
+  .switchButton {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Specific adjustments for 380px - 480px to prevent scrolling */
+@media (max-width: 480px) {
+  .cardContainer {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .cardContainer_left {
+    padding: 1rem;
+  }
+
+  .cardLeftHeading {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .subHeading {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .inputContainers {
+    gap: 0.75rem;
+  }
+
+  .inputRow1 {
+    gap: 0.75rem;
+  }
+
+  .inputField {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .submitButton {
+    margin-top: 0.5rem;
+  }
+
+  .submitButton button {
+    padding: 0.7rem;
   }
 }
