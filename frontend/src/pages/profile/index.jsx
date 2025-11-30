@@ -529,12 +529,12 @@ export default function ProfilePage() {
 
         {isModalOpen && (
           <div
-            className={styles.CommentsContainer}
+            className={styles.WorkCommentsContainer}
             onClick={() => setIsModalOpen(false)}
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className={styles.allCommentsContainer}
+              className={styles.AllWorksContainer}
             >
               <h3 style={{ padding: "1rem" }}>Work History</h3>
               <input
@@ -570,7 +570,7 @@ export default function ProfilePage() {
                   setInputData({ company: "", position: "", years: "" });
                   setIsModalOpen(false);
                 }}
-                className={styles.postCommmentContainer_postBtn}
+                className={styles.addWorkButton}
               >
                 Add Work
               </button>

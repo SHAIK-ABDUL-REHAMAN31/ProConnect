@@ -273,6 +273,64 @@
   padding-inline: 10px;
   padding-block: 10px;
 }
+.WorkCommentsContainer {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0%;
+  left: 0%;
+  background: rgb(0, 0, 0, 0.7);
+  overflow: hidden;
+  z-index: 2;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  z-index: 5;
+}
+.AllWorksContainer {
+  height: fit-content;
+  width: 40%;
+  position: relative;
+  border-radius: 10px;
+  padding: 1.4rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  gap: 1rem;
+}
+.inputField {
+  border-radius: 10px;
+  padding-inline: 1.2rem;
+  outline: none;
+  padding-block: 0.8rem;
+  border: 1px solid silver;
+  width: 100%;
+  transition: 0.2s;
+}
+.inputField:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+.addWorkButton {
+  background-color: #007bff;
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  font-weight: 500;
+  width: fit-content;
+  border: none;
+}
+.addWorkButton:hover {
+  background-color: #0056b3;
+}
+
 .CommentsContainer {
   position: fixed;
   inset: 0;
@@ -631,6 +689,10 @@
   }
   .singlecard {
     border-radius: 0rem;
+  }
+  .AllWorksContainer {
+    height: fit-content;
+    width: 80%;
   }
 }
 
