@@ -11,12 +11,16 @@ node_modules/
 
 # Environment files
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-backend/.env
-frontend/.env.local
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
 
 # Uploads and temporary files
 backend/uploads/*
