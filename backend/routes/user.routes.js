@@ -17,14 +17,15 @@ import { getMyConnectionsRequest } from "../controllers/userConteroller.js";
 import { whatAreMyConnections } from "../controllers/userConteroller.js";
 import { acceptConnectionRequest } from "../controllers/userConteroller.js";
 import { profileUpload } from "../config/multer.js";
+import { authRateLimiter } from "../src/core/middleware/rateLimiter.middleware.js";
 const router = Router();
 
 router
   .route("/profile_picture_update")
   .post(profileUpload.single("profile_picture"), updateProfilePicture);
 
-router.route("/register").post(register);
-router.route("/login").post(login);
+router.route("/register").post(authRateLimiter, register);
+router.route("/login").post(authRateLimiter, login);
 router.route("/update_user_profile").post(updateUserprofile);
 router.route("/get_user_and_profile").get(getUserAndProfile);
 router.route("/update_user_data").post(updateUserData);

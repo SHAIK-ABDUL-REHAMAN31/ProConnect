@@ -3,8 +3,8 @@ import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./style.module.css";
-import { loginUser, registerUser } from "@/config/redux/action/authAction";
-import { emptyMessage } from "@/config/redux/reducre/authReducer";
+import { loginUser, registerUser } from "@/config/redux/action/userAction";
+import { emptyMessage } from "@/config/redux/reducre/userReducer";
 
 export default function LoginComponent() {
   const dispatch = useDispatch();
@@ -18,11 +18,11 @@ export default function LoginComponent() {
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (authState.loggedIn) router.push("/dashboard");
+    if (authState.loggedIn) router.push("/");
   }, [authState.loggedIn]);
 
   useEffect(() => {
-    if (localStorage.getItem("token")) router.push("/dashboard");
+    if (localStorage.getItem("token")) router.push("/");
   }, []);
 
   useEffect(() => {
@@ -44,14 +44,14 @@ export default function LoginComponent() {
     const usernamePattern = /^[a-zA-Z0-9_]+$/;
     if (!usernamePattern.test(username.trim())) {
       alert(
-        "Invalid username. Only letters, numbers, and underscores (_) allowed. No spaces or special characters."
+        "Invalid username. Only letters, numbers, and underscores (_) allowed. No spaces or special characters.",
       );
       return;
     }
 
     console.log("Registering...");
     dispatch(
-      registerUser({ name, username: username.trim(), email, password })
+      registerUser({ name, username: username.trim(), email, password }),
     );
 
     setName("");
@@ -67,7 +67,7 @@ export default function LoginComponent() {
     }
 
     console.log("Logging in...");
-    dispatch(loginUser({ email, password }));
+    dispatch(loginUser({ email: email.trim(), password }));
   };
 
   return (
@@ -117,8 +117,9 @@ export default function LoginComponent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.inputField}
-                placeholder="Email Address"
-                type="email"
+                placeholder={UserLoginMethod ? "Email or Username" : "Email Address"}
+                type={UserLoginMethod ? "text" : "email"}
+                autoComplete={UserLoginMethod ? "username" : "email"}
               />
               <input
                 value={password}
@@ -126,6 +127,12 @@ export default function LoginComponent() {
                 className={styles.inputField}
                 placeholder="Password"
                 type="password"
+                autoComplete="current-password"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    UserLoginMethod ? handleLogin() : handleRegister();
+                  }
+                }}
               />
 
               <div className={styles.submitButton}>

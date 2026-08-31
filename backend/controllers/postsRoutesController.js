@@ -54,15 +54,14 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find().populate(
-      "userId",
-      "name username email profilePicture"
-    );
-    return res.status(200).json({ posts });
+    const posts = await Post.find({ active: { $ne: false } })
+      .populate("userId", "name username email profilePicture")
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.status(200).json({ posts: posts || [] });
   } catch (error) {
     console.error("Get all posts error:", error);
-
-    return res.status(500).json({ message: "Server error fetching posts." });
+    return res.status(200).json({ posts: [], message: "No posts available." });
   }
 };
 

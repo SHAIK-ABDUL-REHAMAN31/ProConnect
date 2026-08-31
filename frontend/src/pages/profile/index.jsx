@@ -1,20 +1,21 @@
+import React, { useEffect, useState, useMemo } from "react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import UserLayout from "@/layout/UserLayout";
+import DashBoardLayout from "@/layout/dashboardLayout";
+import styles from "./index.module.css";
+import { BASE_URL, clientServer } from "@/config";
+import FullPageLoader from "@/components/FullPageLoader";
 import {
   deletePost,
   getAboutUser,
   getAllPosts,
   incrementLike,
   decrementLike,
-  getAllComents,
-  postOnComment,
 } from "@/config/redux/action/postAction";
-import DashBoardLayout from "@/layout/dashboardLayout";
-import { resetPostId } from "@/config/redux/reducre/postReducer";
-import UserLayout from "@/layout/UserLayout";
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import styles from "./index.module.css";
-import { BASE_URL, clientServer } from "@/config";
-import { useRouter } from "next/router";
+
+const DEFAULT_BANNER = "https://images.pexels.com/photos/733852/pexels-photo-733852.jpeg";
 
 export default function ProfilePage() {
   const dispatch = useDispatch();
@@ -23,26 +24,44 @@ export default function ProfilePage() {
   const postReducer = useSelector((state) => state.postReducer);
 
   const [userProfile, setUserProfile] = useState(null);
-  const [userPosts, setUserPosts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [inputData, setInputData] = useState({
+  const [activeModal, setActiveModal] = useState(null); // 'INFO' | 'BIO' | 'WORK_ADD' | 'WORK_EDIT' | 'EDU_ADD' | 'EDU_EDIT' | 'SKILL' | null
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
+
+  // Form states
+  const [infoForm, setInfoForm] = useState({ name: "", currentPost: "", location: "" });
+  const [bioText, setBioText] = useState("");
+  const [workForm, setWorkForm] = useState({
     company: "",
     position: "",
     years: "",
+    location: "",
+    description: "",
   });
+  const [eduForm, setEduForm] = useState({
+    school: "",
+    degree: "",
+    fieldOfStudy: "",
+    startDate: "",
+    endDate: "",
+    description: "",
+  });
+  const [skillInput, setSkillInput] = useState("");
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [likingPosts, setLikingPosts] = useState(new Set());
-  const [postComment, setPostComment] = useState("");
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
 
   useEffect(() => {
     const savedLikes = localStorage.getItem("likedPosts");
     if (savedLikes) {
       try {
         setLikedPosts(new Set(JSON.parse(savedLikes)));
-      } catch (e) {
-        console.error("Error loading liked posts:", e);
-      }
+      } catch (e) {}
     }
   }, []);
 
@@ -50,633 +69,931 @@ export default function ProfilePage() {
     localStorage.setItem("likedPosts", JSON.stringify([...likedPosts]));
   }, [likedPosts]);
 
-  const handleWorkInputData = (e) => {
-    const { name, value } = e.target;
-    setInputData({ ...inputData, [name]: value });
-  };
-
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (token) {
       dispatch(getAboutUser({ token }));
       dispatch(getAllPosts());
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (authState?.user) {
       setUserProfile(authState.user);
+      setInfoForm({
+        name: authState.user?.userId?.name || "",
+        currentPost: authState.user?.currentPost || authState.user?.headline || "",
+        location: authState.user?.location || "Global",
+      });
+      setBioText(authState.user?.bio || authState.user?.about || "");
     }
   }, [authState.user]);
 
-  useEffect(() => {
-    if (authState?.user && postReducer.posts.length > 0) {
-      const filteredPosts = postReducer.posts.filter(
-        (post) => post.userId.username === authState.user.userId.username
+  // Filter posts made by this user
+  const userPosts = useMemo(() => {
+    const username = authState?.user?.userId?.username;
+    const userId = authState?.user?.userId?._id || authState?.user?._id;
+    if (!username && !userId) return [];
+    return (postReducer.posts || []).filter((post) => {
+      const pUsername = post.userId?.username;
+      const pId = post.userId?._id || post.userId?.id || post.userId;
+      return (
+        (username && pUsername === username) ||
+        (userId && pId && pId.toString() === userId.toString())
       );
-      setUserPosts(filteredPosts);
-    }
-  }, [authState?.user?.userId?.username, postReducer.posts]);
+    });
+  }, [authState.user, postReducer.posts]);
 
   if (!userProfile) {
-    return (
-      <UserLayout>
-        <DashBoardLayout>
-          <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <h3>Loading...</h3>
-          </div>
-        </DashBoardLayout>
-      </UserLayout>
-    );
+    return <FullPageLoader text="Loading your professional profile..." />;
   }
 
-  const { userId, bio, pastWork } = userProfile;
+  const { userId, bio, currentPost, location, pastWork = [], education = [], skills = [], coverPicture } = userProfile;
 
-  const updateUserProfilePicture = async (file) => {
+  const getImageUrl = (imagePath, name = "User") => {
+    if (!imagePath)
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0a66c2&color=fff&bold=true`;
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+    return `${BASE_URL}/uploads/${imagePath}`;
+  };
+
+  // Upload Profile Picture
+  const handleProfilePictureUpload = async (file) => {
     if (!file) return;
-
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a valid image (JPG, PNG, or WebP)");
+      alert("Please upload a valid image (JPG, PNG, WebP)");
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size should be less than 5MB");
+      alert("Image size should be less than 5MB");
       return;
     }
-
-    setUploading(true);
-
-    const formData = new FormData();
-    formData.append("profile_picture", file);
-    formData.append("token", localStorage.getItem("token"));
-
-    console.log("📤 Uploading file:", file.name);
 
     try {
-      const response = await clientServer.post(
-        "/profile_picture_update",
-        formData
-      );
+      setUploading(true);
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("token", token);
+      formData.append("profile_picture", file);
 
-      if (response.status === 200 && response.data.message) {
-        const token = localStorage.getItem("token");
-        await dispatch(getAboutUser({ token }));
-      } else {
-        throw new Error("Upload failed");
-      }
-    } catch (error) {
-      console.error(" Upload failed:", error);
-      console.error(" Backend error:", error.response?.data);
-      alert(
-        error.response?.data?.message ||
-          "Failed to upload profile picture. Please try again."
-      );
+      await clientServer.post("/profile_picture_update", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      await dispatch(getAboutUser({ token }));
+      showToast("Profile photo updated successfully!");
+    } catch (err) {
+      console.error("Profile picture upload failed:", err);
+      alert("Failed to upload profile picture.");
     } finally {
       setUploading(false);
     }
   };
-  const updateUserProfileData = async () => {
+
+  // Save profile updates to backend
+  const saveProfileData = async (updatedFields, successMsg = "Profile updated!") => {
     try {
-      await clientServer.post("/update_user_profile", {
-        token: localStorage.getItem("token"),
-        name: userProfile.userId.name,
-      });
-
-      await clientServer.post("/update_user_data", {
-        token: localStorage.getItem("token"),
-        bio: userProfile.bio,
-        currentPost: userProfile.currentPost,
-        pastWork: userProfile.pastWork,
-        education: userProfile.education,
-      });
-
       const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Update Profile model
+      await clientServer.post("/update_user_data", {
+        token,
+        ...updatedFields,
+      });
+
+      // Update User name if provided
+      if (updatedFields.name && updatedFields.name !== userId?.name) {
+        await clientServer.post("/update_user_profile", {
+          token,
+          name: updatedFields.name,
+        });
+      }
+
       await dispatch(getAboutUser({ token }));
-
-      alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Profile update error:", error);
-      alert("Failed to update profile. Please try again.");
+      showToast(successMsg);
+      setActiveModal(null);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Error saving profile details.");
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath)
-      return "https://ui-avatars.com/api/?name=User&size=150&background=0D8ABC&color=fff";
-    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-      return imagePath;
-    }
-    return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+  // Bio Update Handler
+  const handleSaveBio = async (e) => {
+    e.preventDefault();
+    await saveProfileData({ bio: bioText }, "About summary updated!");
   };
+
+  // Basic Info Update Handler
+  const handleSaveInfo = async (e) => {
+    e.preventDefault();
+    await saveProfileData(
+      {
+        name: infoForm.name,
+        currentPost: infoForm.currentPost,
+        location: infoForm.location,
+      },
+      "Basic information updated!"
+    );
+  };
+
+  // Work Experience Handlers
+  const handleSaveWork = async (e) => {
+    e.preventDefault();
+    let updatedWork = [...pastWork];
+    if (activeModal === "WORK_EDIT" && editingIndex !== null) {
+      updatedWork[editingIndex] = workForm;
+    } else {
+      updatedWork.unshift(workForm);
+    }
+    await saveProfileData({ pastWork: updatedWork }, "Work experience saved!");
+    setWorkForm({ company: "", position: "", years: "", location: "", description: "" });
+  };
+
+  const handleDeleteWork = async (idx) => {
+    if (!confirm("Are you sure you want to remove this experience?")) return;
+    const updatedWork = pastWork.filter((_, i) => i !== idx);
+    await saveProfileData({ pastWork: updatedWork }, "Experience removed.");
+  };
+
+  const openEditWork = (work, idx) => {
+    setWorkForm(work);
+    setEditingIndex(idx);
+    setActiveModal("WORK_EDIT");
+  };
+
+  // Education Handlers
+  const handleSaveEdu = async (e) => {
+    e.preventDefault();
+    let updatedEdu = [...education];
+    if (activeModal === "EDU_EDIT" && editingIndex !== null) {
+      updatedEdu[editingIndex] = eduForm;
+    } else {
+      updatedEdu.unshift(eduForm);
+    }
+    await saveProfileData({ education: updatedEdu }, "Education details saved!");
+    setEduForm({ school: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", description: "" });
+  };
+
+  const handleDeleteEdu = async (idx) => {
+    if (!confirm("Are you sure you want to remove this education entry?")) return;
+    const updatedEdu = education.filter((_, i) => i !== idx);
+    await saveProfileData({ education: updatedEdu }, "Education entry removed.");
+  };
+
+  const openEditEdu = (edu, idx) => {
+    setEduForm(edu);
+    setEditingIndex(idx);
+    setActiveModal("EDU_EDIT");
+  };
+
+  // Skills Handlers
+  const handleAddSkill = async (e) => {
+    e?.preventDefault();
+    const skill = skillInput.trim();
+    if (!skill) return;
+    if (skills.includes(skill)) {
+      setSkillInput("");
+      return;
+    }
+    const updatedSkills = [...skills, skill];
+    await saveProfileData({ skills: updatedSkills }, `Skill '${skill}' added!`);
+    setSkillInput("");
+  };
+
+  const handleRemoveSkill = async (skillToRemove) => {
+    const updatedSkills = skills.filter((s) => s !== skillToRemove);
+    await saveProfileData({ skills: updatedSkills }, "Skill removed.");
+  };
+
+  // PDF Profile Download
+  const handleDownloadProfile = async () => {
+    try {
+      showToast("Generating your profile PDF...");
+      const targetId = userId?._id || userId;
+      const response = await clientServer.get(`/user/download_profile?id=${targetId}`);
+      if (response.data?.message) {
+        window.open(`${BASE_URL}/uploads/${response.data.message}`, "_blank");
+      }
+    } catch (err) {
+      console.error("PDF download error:", err);
+      alert("Failed to download profile PDF.");
+    }
+  };
+
+  const bannerImg = coverPicture || DEFAULT_BANNER;
 
   return (
     <UserLayout>
-      <DashBoardLayout>
-        <div className={styles.container}>
-          <div className={styles.backDropContainer}>
-            <label
-              htmlFor="profilePictureUpload"
-              className={styles.backDropContainer_profilOverLay}
-              style={{ cursor: uploading ? "not-allowed" : "pointer" }}
+      <Head>
+        <title>{userId?.name ? `${userId.name} | My Profile` : "My Profile | ProConnect 2.0"}</title>
+        <meta
+          name="description"
+          content="View, manage, and edit your professional profile, work history, education, skills, and activities on ProConnect."
+        />
+      </Head>
+
+      <DashBoardLayout requireAuth={true}>
+        <div className={styles.profilePageWrapper}>
+          {toastMessage && <div className={styles.toastBanner}>{toastMessage}</div>}
+
+          {/* ================= 1. PROFILE HEADER CARD ================= */}
+          <div className={styles.profileHeaderCard}>
+            {/* Cover Banner */}
+            <div
+              className={styles.bannerBackdrop}
+              style={{ backgroundImage: `url(${bannerImg})` }}
             >
-              <p>{uploading ? "Uploading..." : "Edit"}</p>
-            </label>
-            <input
-              onChange={(e) => {
-                updateUserProfilePicture(e.target.files[0]);
-              }}
-              type="file"
-              accept="image/*"
-              id="profilePictureUpload"
-              name="profile_picture"
-              hidden
-              disabled={uploading}
-            />
-            <img
-              className={styles.profile_picture}
-              src={getImageUrl(userId?.profilePicture)}
-              alt="Profile"
-            />
-            {uploading && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  background: "rgba(0,0,0,0.7)",
-                  color: "white",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "8px",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Uploading...
-              </div>
-            )}
-          </div>
+              <div className={styles.bannerOverlay}></div>
+            </div>
 
-          <div className={styles.profileContainer_details}>
-            <div style={{ display: "flex", gap: "0.7rem" }}>
-              <div style={{ flex: "0.8" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    width: "fit-content",
-                    gap: "1.2rem",
-                  }}
+            {/* Avatar & Action Bar */}
+            <div className={styles.avatarSection}>
+              <div className={styles.avatarContainer}>
+                <img
+                  className={styles.profileAvatar}
+                  src={getImageUrl(userId?.profilePicture, userId?.name)}
+                  alt={userId?.name || "Profile"}
+                />
+                <label
+                  htmlFor="avatarInput"
+                  className={styles.avatarUploadBadge}
+                  title="Upload profile picture"
                 >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
                   <input
-                    onChange={(e) => {
-                      setUserProfile({
-                        ...userProfile,
-                        userId: { ...userProfile.userId, name: e.target.value },
-                      });
-                    }}
-                    type="text"
-                    className={styles.nameEdit}
-                    value={userId?.name || ""}
+                    id="avatarInput"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleProfilePictureUpload(e.target.files[0])}
+                    hidden
+                    disabled={uploading}
                   />
-                </div>
-                <div className={styles.bioText}>
-                  <p>@{userId?.username}</p>
-                  <textarea
-                    value={bio || ""}
-                    onChange={(e) => {
-                      setUserProfile({ ...userProfile, bio: e.target.value });
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    maxLength={220}
-                    placeholder="Write something about yourself..."
-                  />
-                  <p className={styles.BioClass}>{(bio || "").length}/220</p>
-                </div>
+                </label>
+                {uploading && <div className={styles.uploadingSpinner}>Uploading...</div>}
               </div>
 
-              <div
-                className={styles.profileRecentActivity}
-                style={{ flex: "0.2" }}
-              >
-                <h3>Recent Activity</h3>
+              {/* Action Buttons */}
+              <div className={styles.headerActionButtons}>
+                <button
+                  className={styles.editProfileBtn}
+                  onClick={() => setActiveModal("INFO")}
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Edit Profile</span>
+                </button>
 
-                {userPosts?.length > 0 ? (
-                  <div key={userPosts[0]._id} className={styles.postCard}>
-                    <div className={styles.card}>
-                      <div className={styles.postCard_profileContainer}>
-                        {userPosts[0].media ? (
-                          <img
-                            src={getImageUrl(userPosts[0].media)}
-                            alt="Post"
-                          />
-                        ) : (
-                          <div
-                            style={{ width: "3.4rem", height: "3.4rem" }}
-                          ></div>
-                        )}
-                      </div>
-                      <p>{userPosts[0].body}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>No posts yet.</p>
-                )}
+                <button
+                  className={styles.downloadPdfBtn}
+                  onClick={handleDownloadProfile}
+                  title="Export Profile as PDF"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Download Resume</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Personal Details */}
+            <div className={styles.profileDetailsContent}>
+              <div className={styles.nameRow}>
+                <h1 className={styles.profileName}>{userId?.name || "Professional"}</h1>
+                <span className={styles.profileHandle}>@{userId?.username}</span>
+              </div>
+
+              <p className={styles.profileHeadline}>
+                {currentPost || bio || "Professional on ProConnect • Open to Opportunities"}
+              </p>
+
+              <div className={styles.metaRow}>
+                <span className={styles.metaItem}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {location || "Global"}
+                </span>
+
+                <span className={styles.metaItem}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  {userId?.email}
+                </span>
+
+                <span className={styles.metaBadge}>Pro Member</span>
               </div>
             </div>
           </div>
 
-          {userProfile != authState.user && (
-            <div onClick={() => updateUserProfileData()}>
-              <button className={styles.acceptButton}>Update Profile</button>
-            </div>
-          )}
-
-          <div className={styles.WorkHistory}>
-            <div className={styles.workHistoryTag_btn}>
-              <h4>Work History</h4>
+          {/* ================= 2. ABOUT / BIO SECTION ================= */}
+          <div className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleRow}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a66c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <h2>About</h2>
+              </div>
               <button
-                className={styles.AddWorkButton}
-                onClick={() => setIsModalOpen(true)}
+                className={styles.sectionActionBtn}
+                onClick={() => setActiveModal("BIO")}
+                title="Edit About Bio"
               >
-                Add Your Work
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Edit</span>
               </button>
             </div>
-            <div className={styles.WorkHistoryContainer}>
-              {pastWork?.map((work, index) => (
-                <div key={index} className={styles.WorkHistoryCard}>
-                  <div className={styles.cardHeader}>
-                    <h5>{work.company}</h5>
-                    <span className={styles.years}>{work.years} yrs</span>
-                  </div>
-                  <p className={styles.position}>{work.position}</p>
-                </div>
-              ))}
+
+            <div className={styles.aboutContent}>
+              {bio ? (
+                <p className={styles.aboutText}>{bio}</p>
+              ) : (
+                <p className={styles.emptyPrompt}>
+                  Share a brief summary about your background, career focus, and achievements to stand out to connections and recruiters.
+                </p>
+              )}
             </div>
           </div>
 
-          <div className={styles.PostsContainer} style={{ flex: "0.2" }}>
-            <div className={styles.wrapper}>
-              <h3 style={{ alignSelf: "start" }}>My Activity</h3>
-              <h4 style={{ alignSelf: "start" }}>All Posts </h4>
-              {userPosts?.length > 0 ? (
-                userPosts.map((post) => (
-                  <div key={post._id} className={styles.singlecard}>
-                    <div className={styles.singlecard_profileContainer}>
-                      <img
-                        onClick={() => router.push("/profile")}
-                        src={getImageUrl(post.userId.profilePicture)}
-                        alt={post.userId.name}
-                      />
-                      <div className={styles.userInfo}>
-                        <p className={styles.userName}>{post.userId.name}</p>
-                        <p className={styles.userHandle}>
-                          @{post.userId.username}
-                        </p>
-                      </div>
+          {/* ================= 3. WORK EXPERIENCE SECTION ================= */}
+          <div className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleRow}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a66c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <h2>Experience</h2>
+              </div>
+              <button
+                className={styles.sectionActionBtn}
+                onClick={() => {
+                  setWorkForm({ company: "", position: "", years: "", location: "", description: "" });
+                  setActiveModal("WORK_ADD");
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Experience</span>
+              </button>
+            </div>
 
-                      {post.userId._id === authState.user.userId._id && (
-                        <div
-                          className={styles.deleteButton}
-                          onClick={async () => {
-                            await dispatch(deletePost({ post_id: post._id }));
-                            await dispatch(getAllPosts());
-                          }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            width="20"
-                            height="20"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                            />
-                          </svg>
-                        </div>
-                      )}
+            <div className={styles.timelineList}>
+              {pastWork && pastWork.length > 0 ? (
+                pastWork.map((work, idx) => (
+                  <div key={idx} className={styles.timelineItem}>
+                    <div className={styles.timelineIcon}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0a66c2" strokeWidth="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      </svg>
                     </div>
 
-                    <p className={styles.postContent}>{post.body}</p>
-
-                    {post.media && (
-                      <div className={styles.singlecardImage}>
-                        <img src={getImageUrl(post.media)} alt="Post content" />
-                      </div>
-                    )}
-
-                    <div className={styles.optionsContainer}>
-                      <div
-                        className={styles.SingleOptionContainer}
-                        onClick={async () => {
-                          if (likingPosts.has(post._id)) return;
-
-                          const isCurrentlyLiked = likedPosts.has(post._id);
-
-                          try {
-                            setLikingPosts((prev) =>
-                              new Set(prev).add(post._id)
-                            );
-
-                            if (isCurrentlyLiked) {
-                              setLikedPosts((prev) => {
-                                const newSet = new Set(prev);
-                                newSet.delete(post._id);
-                                return newSet;
-                              });
-                              await dispatch(
-                                decrementLike({ post_id: post._id })
-                              );
-                            } else {
-                              setLikedPosts((prev) =>
-                                new Set(prev).add(post._id)
-                              );
-                              await dispatch(
-                                incrementLike({ post_id: post._id })
-                              );
-                            }
-
-                            await dispatch(getAllPosts());
-                          } catch (error) {
-                            console.error("Failed to toggle like:", error);
-
-                            if (isCurrentlyLiked) {
-                              setLikedPosts((prev) =>
-                                new Set(prev).add(post._id)
-                              );
-                            } else {
-                              setLikedPosts((prev) => {
-                                const newSet = new Set(prev);
-                                newSet.delete(post._id);
-                                return newSet;
-                              });
-                            }
-                          } finally {
-                            setLikingPosts((prev) => {
-                              const newSet = new Set(prev);
-                              newSet.delete(post._id);
-                              return newSet;
-                            });
-                          }
-                        }}
-                        style={{
-                          opacity: likingPosts.has(post._id) ? 0.6 : 1,
-                          cursor: likingPosts.has(post._id)
-                            ? "not-allowed"
-                            : "pointer",
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill={
-                            likedPosts.has(post._id) ? "currentColor" : "none"
-                          }
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          style={{
-                            transition: "all 0.2s ease",
-                            color: likedPosts.has(post._id)
-                              ? "#ef4444"
-                              : "currentColor",
-                          }}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-                          />
-                        </svg>
-                        <span
-                          className={styles.likeCount}
-                          style={{
-                            color: likedPosts.has(post._id)
-                              ? "#ef4444"
-                              : "inherit",
-                            fontWeight: likedPosts.has(post._id)
-                              ? "600"
-                              : "400",
-                            transition: "all 0.2s ease",
-                          }}
-                        >
-                          {post.likes}
-                        </span>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineHeader}>
+                        <div>
+                          <h3 className={styles.itemTitle}>{work.position || "Position / Role"}</h3>
+                          <h4 className={styles.itemSubtitle}>{work.company || "Company"}</h4>
+                        </div>
+                        <div className={styles.itemActions}>
+                          <button
+                            className={styles.iconBtn}
+                            onClick={() => openEditWork(work, idx)}
+                            title="Edit"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            className={`${styles.iconBtn} ${styles.deleteIconBtn}`}
+                            onClick={() => handleDeleteWork(idx)}
+                            title="Delete"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                          </button>
+                        </div>
                       </div>
 
-                      <div
-                        className={styles.SingleOptionContainer}
-                        onClick={async () => {
-                          await dispatch(getAllComents({ post_id: post._id }));
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"
-                          />
-                        </svg>
-                        <span>Comment</span>
+                      <div className={styles.itemMeta}>
+                        {work.years && <span className={styles.metaChip}>{work.years}</span>}
+                        {work.location && <span className={styles.metaLocation}>• {work.location}</span>}
                       </div>
 
-                      <div
-                        className={styles.SingleOptionContainer}
-                        onClick={() => {
-                          const text = encodeURIComponent(post.body);
-                          const url = encodeURIComponent("ProConnnect.in");
-                          window.open(
-                            `https://twitter.com/intent/tweet?text=${text}&url=${url}`
-                          );
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
-                          />
-                        </svg>
-                        <span>Share</span>
-                      </div>
+                      {work.description && (
+                        <p className={styles.itemDescription}>{work.description}</p>
+                      )}
                     </div>
                   </div>
                 ))
               ) : (
-                <p>No posts yet.</p>
+                <p className={styles.emptyPrompt}>
+                  No work experience listed yet. Add your past and current roles to showcase your career journey.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* ================= 4. EDUCATION SECTION ================= */}
+          <div className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleRow}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a66c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+                <h2>Education</h2>
+              </div>
+              <button
+                className={styles.sectionActionBtn}
+                onClick={() => {
+                  setEduForm({ school: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", description: "" });
+                  setActiveModal("EDU_ADD");
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Education</span>
+              </button>
+            </div>
+
+            <div className={styles.timelineList}>
+              {education && education.length > 0 ? (
+                education.map((edu, idx) => (
+                  <div key={idx} className={styles.timelineItem}>
+                    <div className={styles.timelineIcon}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0a66c2" strokeWidth="2">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                        <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                      </svg>
+                    </div>
+
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineHeader}>
+                        <div>
+                          <h3 className={styles.itemTitle}>{edu.school || "University / College"}</h3>
+                          <h4 className={styles.itemSubtitle}>
+                            {[edu.degree, edu.fieldOfStudy].filter(Boolean).join(" • ") || "Degree"}
+                          </h4>
+                        </div>
+                        <div className={styles.itemActions}>
+                          <button
+                            className={styles.iconBtn}
+                            onClick={() => openEditEdu(edu, idx)}
+                            title="Edit"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            className={`${styles.iconBtn} ${styles.deleteIconBtn}`}
+                            onClick={() => handleDeleteEdu(idx)}
+                            title="Delete"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {(edu.startDate || edu.endDate) && (
+                        <div className={styles.itemMeta}>
+                          <span className={styles.metaChip}>
+                            {[edu.startDate, edu.endDate].filter(Boolean).join(" - ")}
+                          </span>
+                        </div>
+                      )}
+
+                      {edu.description && (
+                        <p className={styles.itemDescription}>{edu.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.emptyPrompt}>
+                  No education history added. Add your school, college, or certifications.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* ================= 5. SKILLS SECTION ================= */}
+          <div className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleRow}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a66c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <h2>Skills & Expertise</h2>
+              </div>
+            </div>
+
+            {/* Add Skill Input */}
+            <form className={styles.skillInputRow} onSubmit={handleAddSkill}>
+              <input
+                type="text"
+                placeholder="Add a skill (e.g. React, Node.js, Python, UI Design)..."
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                className={styles.skillInputField}
+              />
+              <button type="submit" className={styles.addSkillBtn} disabled={!skillInput.trim()}>
+                + Add Skill
+              </button>
+            </form>
+
+            {/* Skills Chips */}
+            <div className={styles.skillsWrapper}>
+              {skills && skills.length > 0 ? (
+                skills.map((skill, idx) => (
+                  <span key={idx} className={styles.skillChip}>
+                    <span>{skill}</span>
+                    <button
+                      type="button"
+                      className={styles.removeSkillBtn}
+                      onClick={() => handleRemoveSkill(skill)}
+                      title={`Remove ${skill}`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <p className={styles.emptyPrompt}>
+                  Highlight your top technical and professional skills above.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* ================= 6. RECENT ACTIVITY / MY POSTS ================= */}
+          <div className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleRow}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a66c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                <h2>Recent Activity & Posts ({userPosts.length})</h2>
+              </div>
+              <button
+                className={styles.sectionActionBtn}
+                onClick={() => router.push("/")}
+              >
+                <span>+ Create Post</span>
+              </button>
+            </div>
+
+            <div className={styles.postsList}>
+              {userPosts.length > 0 ? (
+                userPosts.map((post) => {
+                  const isLiked = likedPosts.has(post._id);
+                  return (
+                    <div key={post._id} className={styles.postCardItem}>
+                      <div className={styles.postCardHeader}>
+                        <img
+                          src={getImageUrl(userId?.profilePicture, userId?.name)}
+                          alt={userId?.name || "User"}
+                          className={styles.postCardAvatar}
+                        />
+                        <div className={styles.postCardUserInfo}>
+                          <strong>{userId?.name}</strong>
+                          <span>@{userId?.username} • {new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
+                        </div>
+
+                        <button
+                          className={styles.postDeleteBtn}
+                          onClick={async () => {
+                            if (!confirm("Are you sure you want to delete this post?")) return;
+                            await dispatch(deletePost({ post_id: post._id }));
+                            await dispatch(getAllPosts());
+                            showToast("Post deleted.");
+                          }}
+                          title="Delete post"
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+
+                      <p className={styles.postBodyText}>{post.body}</p>
+
+                      {post.media && (
+                        <div className={styles.postMediaWrapper}>
+                          <img src={getImageUrl(post.media)} alt="Post Attachment" />
+                        </div>
+                      )}
+
+                      <div className={styles.postFooterBar}>
+                        <button
+                          className={`${styles.postLikeBtn} ${isLiked ? styles.postLiked : ""}`}
+                          onClick={async () => {
+                            if (likingPosts.has(post._id)) return;
+                            try {
+                              setLikingPosts((prev) => new Set(prev).add(post._id));
+                              if (isLiked) {
+                                setLikedPosts((prev) => {
+                                  const s = new Set(prev);
+                                  s.delete(post._id);
+                                  return s;
+                                });
+                                await dispatch(decrementLike({ post_id: post._id }));
+                              } else {
+                                setLikedPosts((prev) => new Set(prev).add(post._id));
+                                await dispatch(incrementLike({ post_id: post._id }));
+                              }
+                              await dispatch(getAllPosts());
+                            } finally {
+                              setLikingPosts((prev) => {
+                                const s = new Set(prev);
+                                s.delete(post._id);
+                                return s;
+                              });
+                            }
+                          }}
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill={isLiked ? "#ef4444" : "none"} stroke={isLiked ? "#ef4444" : "currentColor"} strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                          </svg>
+                          <span>{post.likesCount || (isLiked ? 1 : 0)} Likes</span>
+                        </button>
+
+                        <div className={styles.postCommentStat}>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                          </svg>
+                          <span>{post.comments?.length || 0} Comments</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className={styles.emptyPostsState}>
+                  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <p>No activity yet. Share an update, article, or project with your network.</p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {isModalOpen && (
-          <div
-            className={styles.WorkCommentsContainer}
-            onClick={() => setIsModalOpen(false)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className={styles.AllWorksContainer}
-            >
-              <h3 style={{ padding: "1rem" }}>Work History</h3>
-              <input
-                onChange={handleWorkInputData}
-                name="company"
-                className={styles.inputField}
-                placeholder="Enter Company Name"
-                type="text"
-                value={inputData.company}
-              />
-              <input
-                onChange={handleWorkInputData}
-                name="position"
-                className={styles.inputField}
-                placeholder="Enter Position"
-                type="text"
-                value={inputData.position}
-              />
-              <input
-                onChange={handleWorkInputData}
-                name="years"
-                className={styles.inputField}
-                placeholder="Years"
-                type="number"
-                value={inputData.years}
-              />
-              <button
-                onClick={() => {
-                  setUserProfile({
-                    ...userProfile,
-                    pastWork: [...(userProfile.pastWork || []), inputData],
-                  });
-                  setInputData({ company: "", position: "", years: "" });
-                  setIsModalOpen(false);
-                }}
-                className={styles.addWorkButton}
-              >
-                Add Work
-              </button>
+        {/* ================= MODALS ================= */}
+
+        {/* 1. EDIT BASIC INFO MODAL */}
+        {activeModal === "INFO" && (
+          <div className={styles.modalOverlay} onClick={() => setActiveModal(null)}>
+            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h3>Edit Basic Information</h3>
+                <button className={styles.modalCloseBtn} onClick={() => setActiveModal(null)}>✕</button>
+              </div>
+              <form onSubmit={handleSaveInfo} className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label>Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={infoForm.name}
+                    onChange={(e) => setInfoForm({ ...infoForm, name: e.target.value })}
+                    placeholder="Your Full Name"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Headline / Current Role</label>
+                  <input
+                    type="text"
+                    value={infoForm.currentPost}
+                    onChange={(e) => setInfoForm({ ...infoForm, currentPost: e.target.value })}
+                    placeholder="e.g. Senior Software Engineer at Tech Corp"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Location</label>
+                  <input
+                    type="text"
+                    value={infoForm.location}
+                    onChange={(e) => setInfoForm({ ...infoForm, location: e.target.value })}
+                    placeholder="e.g. San Francisco, CA or London, UK"
+                  />
+                </div>
+                <div className={styles.modalFooter}>
+                  <button type="button" className={styles.cancelBtn} onClick={() => setActiveModal(null)}>Cancel</button>
+                  <button type="submit" className={styles.saveBtn}>Save Changes</button>
+                </div>
+              </form>
             </div>
           </div>
         )}
 
-        {postReducer.postId !== "" && (
-          <div
-            className={styles.CommentsContainer}
-            onClick={() => dispatch(resetPostId())}
-          >
-            <div
-              className={styles.allCommentsContainer}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={styles.commentsHeader}>
-                <h2>Comments</h2>
-                <div
-                  className={styles.closeButton}
-                  onClick={() => dispatch(resetPostId())}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    width="24"
-                    height="24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
+        {/* 2. EDIT BIO / ABOUT MODAL */}
+        {activeModal === "BIO" && (
+          <div className={styles.modalOverlay} onClick={() => setActiveModal(null)}>
+            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h3>Edit About Summary</h3>
+                <button className={styles.modalCloseBtn} onClick={() => setActiveModal(null)}>✕</button>
+              </div>
+              <form onSubmit={handleSaveBio} className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label>About You (Max 500 characters)</label>
+                  <textarea
+                    rows={5}
+                    maxLength={500}
+                    value={bioText}
+                    onChange={(e) => setBioText(e.target.value)}
+                    placeholder="Write a brief professional summary about your expertise, background, and goals..."
+                  />
+                  <span className={styles.charCount}>{bioText.length}/500</span>
+                </div>
+                <div className={styles.modalFooter}>
+                  <button type="button" className={styles.cancelBtn} onClick={() => setActiveModal(null)}>Cancel</button>
+                  <button type="submit" className={styles.saveBtn}>Save About</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 3. WORK EXPERIENCE MODAL */}
+        {(activeModal === "WORK_ADD" || activeModal === "WORK_EDIT") && (
+          <div className={styles.modalOverlay} onClick={() => setActiveModal(null)}>
+            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h3>{activeModal === "WORK_EDIT" ? "Edit Experience" : "Add Experience"}</h3>
+                <button className={styles.modalCloseBtn} onClick={() => setActiveModal(null)}>✕</button>
+              </div>
+              <form onSubmit={handleSaveWork} className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label>Company / Organization *</label>
+                  <input
+                    type="text"
+                    required
+                    value={workForm.company}
+                    onChange={(e) => setWorkForm({ ...workForm, company: e.target.value })}
+                    placeholder="e.g. Google, Microsoft, Startup Inc."
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Role / Position *</label>
+                  <input
+                    type="text"
+                    required
+                    value={workForm.position}
+                    onChange={(e) => setWorkForm({ ...workForm, position: e.target.value })}
+                    placeholder="e.g. Frontend Developer, Product Manager"
+                  />
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Duration / Years</label>
+                    <input
+                      type="text"
+                      value={workForm.years}
+                      onChange={(e) => setWorkForm({ ...workForm, years: e.target.value })}
+                      placeholder="e.g. 2 yrs or 2022 - Present"
                     />
-                  </svg>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Location</label>
+                    <input
+                      type="text"
+                      value={workForm.location}
+                      onChange={(e) => setWorkForm({ ...workForm, location: e.target.value })}
+                      placeholder="e.g. New York, NY / Remote"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className={styles.mainUserPostedConatiner}>
-                {postReducer.comments.length === 0 ? (
-                  <p
-                    style={{
-                      textAlign: "center",
-                      color: "#64748b",
-                      marginTop: "2rem",
-                    }}
-                  >
-                    No comments yet. Be the first to comment!
-                  </p>
-                ) : (
-                  postReducer.comments.map((postComment) => (
-                    <div
-                      key={postComment._id}
-                      className={styles.UserPostedComment_Container}
-                    >
-                      <div
-                        className={styles.UserPostedComment_Profile_Container}
-                      >
-                        <img
-                          className={styles.UserPostedComment_Profile_image}
-                          src={getImageUrl(postComment.userId.profilePicture)}
-                          alt={postComment.userId.username}
-                        />
-                      </div>
-                      <div
-                        className={styles.UserPostedComment_UserDataContainer}
-                      >
-                        <p className={styles.commentUser}>
-                          @{postComment.userId.username}
-                        </p>
-                        <p className={styles.commentBody}>
-                          {postComment.commentBody}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className={styles.postCommmentContainer}>
-                <input
-                  placeholder="Write a comment..."
-                  onChange={(e) => setPostComment(e.target.value)}
-                  value={postComment}
-                />
-                <div
-                  onClick={async () => {
-                    if (!postComment.trim()) return;
-                    await dispatch(
-                      postOnComment({
-                        post_id: postReducer.postId,
-                        body: postComment,
-                      })
-                    );
-                    setPostComment("");
-                    await dispatch(
-                      getAllComents({ post_id: postReducer.postId })
-                    );
-                  }}
-                  className={styles.postCommmentContainer_postBtn}
-                >
-                  Post
+                <div className={styles.formGroup}>
+                  <label>Description & Responsibilities</label>
+                  <textarea
+                    rows={3}
+                    value={workForm.description}
+                    onChange={(e) => setWorkForm({ ...workForm, description: e.target.value })}
+                    placeholder="Describe key responsibilities, leadership, and technologies used..."
+                  />
                 </div>
+                <div className={styles.modalFooter}>
+                  <button type="button" className={styles.cancelBtn} onClick={() => setActiveModal(null)}>Cancel</button>
+                  <button type="submit" className={styles.saveBtn}>Save Experience</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 4. EDUCATION MODAL */}
+        {(activeModal === "EDU_ADD" || activeModal === "EDU_EDIT") && (
+          <div className={styles.modalOverlay} onClick={() => setActiveModal(null)}>
+            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h3>{activeModal === "EDU_EDIT" ? "Edit Education" : "Add Education"}</h3>
+                <button className={styles.modalCloseBtn} onClick={() => setActiveModal(null)}>✕</button>
               </div>
+              <form onSubmit={handleSaveEdu} className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label>School / University *</label>
+                  <input
+                    type="text"
+                    required
+                    value={eduForm.school}
+                    onChange={(e) => setEduForm({ ...eduForm, school: e.target.value })}
+                    placeholder="e.g. Stanford University, MIT"
+                  />
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Degree</label>
+                    <input
+                      type="text"
+                      value={eduForm.degree}
+                      onChange={(e) => setEduForm({ ...eduForm, degree: e.target.value })}
+                      placeholder="e.g. Bachelor of Science"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Field of Study</label>
+                    <input
+                      type="text"
+                      value={eduForm.fieldOfStudy}
+                      onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
+                      placeholder="e.g. Computer Science"
+                    />
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Start Year</label>
+                    <input
+                      type="text"
+                      value={eduForm.startDate}
+                      onChange={(e) => setEduForm({ ...eduForm, startDate: e.target.value })}
+                      placeholder="e.g. 2020"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>End Year (or Expected)</label>
+                    <input
+                      type="text"
+                      value={eduForm.endDate}
+                      onChange={(e) => setEduForm({ ...eduForm, endDate: e.target.value })}
+                      placeholder="e.g. 2024"
+                    />
+                  </div>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Activities / Notes</label>
+                  <textarea
+                    rows={2}
+                    value={eduForm.description}
+                    onChange={(e) => setEduForm({ ...eduForm, description: e.target.value })}
+                    placeholder="e.g. GPA, societies, student projects..."
+                  />
+                </div>
+                <div className={styles.modalFooter}>
+                  <button type="button" className={styles.cancelBtn} onClick={() => setActiveModal(null)}>Cancel</button>
+                  <button type="submit" className={styles.saveBtn}>Save Education</button>
+                </div>
+              </form>
             </div>
           </div>
         )}

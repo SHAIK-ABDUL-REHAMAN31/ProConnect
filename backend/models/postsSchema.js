@@ -41,5 +41,5 @@ const PostsSchema = new mongoose.Schema({
   },
 });
 
-const Post = mongoose.model("Post", PostsSchema);
+const Post = mongoose.models.Post || mongoose.model("Post", PostsSchema);
 export default Post;

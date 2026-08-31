@@ -8,8 +8,8 @@ export const getAllPosts = createAsyncThunk(
       const response = await clientServer.get("/get_all_posts");
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      console.error("Error While Fteching the posts ", err);
-      return thunkApi.rejectWithValue(err.response.data);
+      console.error("Error While Fetching the posts ", err);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -26,7 +26,7 @@ export const getAboutUser = createAsyncThunk(
 
       return thunkApi.fulfillWithValue(AboutUser.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -38,7 +38,7 @@ export const getAllUsers = createAsyncThunk(
       const response = await clientServer.get("/users/get_all_users");
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -56,12 +56,12 @@ export const createPost = createAsyncThunk(
       const response = await clientServer.post("/create_post", formData);
 
       if (response.status == 201) {
-        return thunkApi.fulfillWithValue("Post Uplod Sucessfully");
+        return thunkApi.fulfillWithValue("Post Uploaded Successfully");
       } else {
         return thunkApi.rejectWithValue("Post Uploading Failed");
       }
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -79,7 +79,7 @@ export const deletePost = createAsyncThunk(
 
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -91,11 +91,10 @@ export const incrementLike = createAsyncThunk(
       const response = await clientServer.post("/like_post", {
         postId: post.post_id,
       });
-      console.log(response.dt);
 
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -110,7 +109,7 @@ export const decrementLike = createAsyncThunk(
 
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.response.data);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -130,7 +129,7 @@ export const getAllComents = createAsyncThunk(
         postId: postData.post_id,
       });
     } catch (err) {
-      return thunkApi.rejectWithValue(err.data.response);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );
@@ -147,7 +146,7 @@ export const postOnComment = createAsyncThunk(
 
       return thunkApi.fulfillWithValue(response.data);
     } catch (err) {
-      return thunkApi.rejectWithValue(err.data.response);
+      return thunkApi.rejectWithValue(err.response?.data || { message: err.message });
     }
   }
 );

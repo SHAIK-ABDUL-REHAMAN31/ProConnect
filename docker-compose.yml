@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: proconnect_backend
+    restart: always
+    ports:
+      - "3030:3030"
+    environment:
+      - PORT=3030
+      - MONGO_URI=mongodb+srv://mrabbu985_db_user:A7W57zD5FHaYdf94@linkedin-clone.qt5fpjt.mongodb.net/?appName=LinkedIn-clone
+      - JWT_SECRET=proconnect_jwt_super_secret_key_2026
+      - JWT_REFRESH_SECRET=proconnect_jwt_refresh_secret_key_2026
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_API_KEY=${CLOUD_API_KEY}
+      - CLOUD_API_SECRET=${CLOUD_API_SECRET}
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - redis
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: proconnect_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3030
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:3030
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: proconnect_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

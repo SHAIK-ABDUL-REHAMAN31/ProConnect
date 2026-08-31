@@ -1,0 +1,91 @@
+.container {
+  max-width: 800px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 1.25rem 1.75rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.25rem;
+}
+
+.headerTitle h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.markAllBtn {
+  background: none;
+  border: 1px solid #0a66c2;
+  color: #0a66c2;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.markAllBtn:hover {
+  background: #e8f3fc;
+}
+
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notificationCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notificationCard.unread {
+  background: #f0f9ff;
+  border-left: 4px solid #0a66c2;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.content {
+  flex: 1;
+}
+
+.message {
+  color: #1f2937;
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+.time {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.unreadDot {
+  width: 10px;
+  height: 10px;
+  background: #0a66c2;
+  border-radius: 50%;
+}

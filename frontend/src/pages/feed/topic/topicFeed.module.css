@@ -1,0 +1,166 @@
+.container {
+  min-height: 100vh;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 40px 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.mainWrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.topicBanner {
+  background: linear-gradient(135deg, #1e293b, #0ea5e9);
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 36px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.tagName {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 6px;
+}
+
+.tagStats {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.followBtn {
+  background: #ffffff;
+  color: #0f172a;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.followBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.4);
+}
+
+.followBtn.following {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.postCard {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.authorRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.postBody {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.pollContainer {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.pollQuestion {
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 14px;
+  font-size: 1rem;
+}
+
+.pollOption {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.pollOption:hover {
+  border-color: #38bdf8;
+}
+
+.pollProgress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(56, 189, 248, 0.2);
+  z-index: 1;
+}
+
+.optionContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.postActions {
+  display: flex;
+  gap: 20px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  border-top: 1px solid #334155;
+  padding-top: 12px;
+}
+
+.postActionBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.postActionBtn:hover {
+  color: #38bdf8;
+}

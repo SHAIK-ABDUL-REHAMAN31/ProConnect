@@ -1,444 +1,1340 @@
-.scrollComponent {
+.feedWrapper {
   display: flex;
-  justify-content: center;
   flex-direction: column;
-  align-items: center;
+  gap: 1.25rem;
   width: 100%;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  padding-bottom: 2rem;
+}
+
+/* ================= 1. HERO PROMO BANNER ================= */
+.heroBanner {
+  background: linear-gradient(135deg, #0a66c2 0%, #1d4ed8 50%, #1e3a8a 100%);
   border-radius: 20px;
-}
-
-.wrapper {
+  padding: 1.85rem 2.25rem;
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  width: 100%;
-  max-width: 700px;
-  padding: 2rem 1rem;
-}
-
-/* Create Post Section */
-.CreatePostConatiner {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  border: 1px solid #e2e8f0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.CreatePostConatiner:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-}
-
-.createPostHeader {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.CreatePostConatiner_image {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #e2e8f0;
-}
-
-.textAreaOfContent {
-  flex: 1;
-  border: none;
-  background: #f8fafc;
-  border-radius: 16px;
-  padding: 1rem;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 1rem;
-  resize: none;
-  min-height: 80px;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.textAreaOfContent:focus {
-  background: #ffffff;
-  box-shadow: 0 0 0 2px #2563eb;
-}
-
-.createPostActions {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding-top: 0.5rem;
-  border-top: 1px solid #f1f5f9;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(10, 102, 194, 0.2);
 }
 
-.actionButton {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #64748b;
-  background: transparent;
-  border: none;
-  font-weight: 500;
-}
-
-.actionButton:hover {
-  background: #f1f5f9;
-  color: #2563eb;
-}
-
-.postButton {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: white;
-  padding: 0.6rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.postButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
-
-.postButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* Posts Container */
-.PostsContainer {
+.heroContent {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
+  z-index: 2;
+  max-width: 480px;
 }
 
-.singlecard {
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.singlecard:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.singlecard_profileContainer {
-  padding: 1.25rem;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.singlecard_profileContainer img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  cursor: pointer;
-  border: 2px solid #f1f5f9;
-}
-
-.userInfo {
-  flex: 1;
-}
-
-.userName {
+.heroBadge {
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #0f172a;
-  font-size: 1rem;
-  margin-bottom: 0.1rem;
+  color: #bfdbfe;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.userHandle {
-  color: #64748b;
-  font-size: 0.875rem;
+.heroHeadline {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-.deleteButton {
-  color: #ef4444;
-  padding: 0.5rem;
-  border-radius: 50%;
+.heroSubtext {
+  font-size: 0.9rem;
+  color: #e0e7ff;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.heroButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.heroPrimaryBtn {
+  background: #ffffff;
+  color: #0a66c2;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
-.deleteButton:hover {
-  background: #fef2f2;
-}
-
-.postContent {
-  padding: 0 1.25rem 1.25rem;
-  color: #334155;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.singlecardImage {
-  width: 100%;
-  max-height: 500px;
-  overflow: hidden;
+.heroPrimaryBtn:hover {
   background: #f8fafc;
+  transform: translateY(-1px);
 }
 
-.singlecardImage img {
+.heroSecondaryBtn {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.heroSecondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+}
+
+.heroImageContainer {
+  position: relative;
+  width: 250px;
+  height: 165px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.heroImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-.optionsContainer {
-  padding: 1rem 1.25rem;
+.heroImgOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(10, 102, 194, 0.35), transparent);
+}
+
+/* ================= 2. POST COMPOSER ================= */
+.composerCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1.25rem;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.composerTopRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.composerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.composerInput {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 0.75rem 1.25rem;
+  color: #0f172a;
+  font-size: 0.92rem;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.composerInput::placeholder {
+  color: #64748b;
+}
+
+.composerInput:focus {
+  background: #ffffff;
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
+}
+
+.submitPostBtn {
+  background: #0a66c2;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitPostBtn:hover {
+  background: #084e96;
+}
+
+.previewContainer {
+  position: relative;
+  display: inline-block;
+  max-width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.previewImg {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.removePreviewBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.composerActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-top: 0.65rem;
   border-top: 1px solid #f1f5f9;
 }
 
-.SingleOptionContainer {
+.composerActionItem {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.85rem;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-.SingleOptionContainer:hover {
-  background: #f8fafc;
-  color: #2563eb;
+.composerActionItem svg {
+  width: 18px;
+  height: 18px;
+  color: #0a66c2;
 }
 
-.SingleOptionContainer svg {
-  width: 1.25rem;
-  height: 1.25rem;
+.composerActionItem:hover {
+  background: #eff6ff;
+  color: #0a66c2;
 }
 
-.likeCount {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-@keyframes heartBeat {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(1.3);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-.SingleOptionContainer svg {
-  transition: all 0.2s ease;
-}
-
-.SingleOptionContainer:active svg {
-  animation: heartBeat 0.3s ease;
-}
-
-/* Comments Modal */
-.CommentsContainer {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-}
-
-.allCommentsContainer {
-  background: #ffffff;
-  width: 100%;
-  max-width: 600px;
-  height: 80vh;
-  border-radius: 24px;
+/* ================= 3. POST CARD ================= */
+.postsFeed {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+  gap: 1.25rem;
 }
 
-.commentsHeader {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+.postCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.commentsHeader h2 {
-  font-size: 1.25rem;
+/* Post Header */
+.postHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.postAuthorGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.authorAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+}
+
+.authorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.authorNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.authorName {
+  font-size: 0.96rem;
   font-weight: 700;
   color: #0f172a;
+  margin: 0;
+  cursor: pointer;
 }
 
-.closeButton {
-  padding: 0.5rem;
-  border-radius: 50%;
-  cursor: pointer;
+.authorName:hover {
+  color: #0a66c2;
+}
+
+.authorHeadline {
+  font-size: 0.78rem;
   color: #64748b;
+  margin: 0;
+}
+
+.postTimeMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 0.1rem;
+}
+
+.globeIcon {
+  width: 12px;
+  height: 12px;
+  color: #94a3b8;
+}
+
+.moreOptionsBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
-.closeButton:hover {
+.moreOptionsBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.moreOptionsBtn:hover {
+  color: #0f172a;
   background: #f1f5f9;
+}
+
+.deletePostBtn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.deletePostBtn:hover {
+  background: #fef2f2;
+}
+
+.deletePostBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Post Body */
+.postBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  color: #1e293b;
+}
+
+.postBody p {
+  margin: 0;
+}
+
+.postHashtags {
+  color: #0a66c2;
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.postHashtags span {
+  cursor: pointer;
+}
+
+.postHashtags span:hover {
+  text-decoration: underline;
+}
+
+/* Post Media Preview */
+.postMediaContainer {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.postMediaImg {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+/* Showcase Media Card */
+.showcaseMediaCard {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.showcaseNavbarMock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: #020617;
+  border-bottom: 1px solid #1e293b;
+  font-size: 0.72rem;
+}
+
+.mockBrand {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.mockPro {
+  color: #ffffff;
+}
+
+.mockConnect {
+  color: #38bdf8;
+}
+
+.mockNavLinks {
+  display: flex;
+  gap: 0.85rem;
+  color: #94a3b8;
+}
+
+.mockNavIcons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.showcaseBodyMock {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: radial-gradient(circle at 80% 50%, rgba(14, 165, 233, 0.15), transparent 70%);
+}
+
+.showcaseLeftHero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.showcaseHeroTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.showcaseHeroSubtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.mockBtnGroup {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.mockPrimaryBtn {
+  background: #0284c7;
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mockOutlineBtn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.showcaseRightCard {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 180px;
+}
+
+.metricHeader {
+  display: flex;
+  flex-direction: column;
+}
+
+.metricBig {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.metricLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.chartLineMock {
+  height: 4px;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 2px;
+  width: 100%;
+}
+
+.metricTags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  color: #34d399;
+}
+
+/* Post Reactions and Stats */
+.postStatsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #64748b;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.reactionsCount {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reactionIconsGroup {
+  display: flex;
+  align-items: center;
+}
+
+.reactBadge {
+  font-size: 0.75rem;
+  margin-right: -4px;
+  z-index: 1;
+}
+
+.reactionsText {
+  font-weight: 500;
+}
+
+.commentsSharesCount {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* Post Action Buttons */
+.postActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.actionBtn:hover {
+  background: #eff6ff;
+  color: #0a66c2;
+}
+
+.activeLiked {
+  color: #ef4444 !important;
+}
+
+.activeLiked svg {
+  color: #ef4444;
+}
+
+/* ================= 4. DEDICATED COMMENT MODAL ================= */
+.commentModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+  padding: 1rem;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.commentModalContent {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: modalSlideUp 0.22s ease-out;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.commentModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.4rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.commentModalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commentModalIcon {
+  font-size: 1.2rem;
+}
+
+.commentModalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.commentModalCloseBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.15rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.commentModalCloseBtn:hover {
+  background: #e2e8f0;
   color: #0f172a;
 }
 
-.mainUserPostedConatiner {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem;
+/* Post Snippet Inside Modal */
+.modalPostSnippet {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.4rem;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.UserPostedComment_Container {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 16px;
-}
-
-.UserPostedComment_Profile_image {
+.snippetAvatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
 }
 
-.UserPostedComment_UserDataContainer {
-  flex: 1;
-}
-
-.commentUser {
-  font-weight: 600;
-  color: #0f172a;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
-}
-
-.commentBody {
-  color: #334155;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.postCommmentContainer {
-  padding: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+.snippetMeta {
   display: flex;
-  gap: 1rem;
-  background: #ffffff;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
 }
 
-.postCommmentContainer input {
+.snippetMeta strong {
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.snippetMeta span {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.snippetBody {
+  font-size: 0.84rem;
+  color: #334155;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Comments Scrollable Thread */
+.modalCommentsThread {
   flex: 1;
-  padding: 0.75rem 1rem;
+  overflow-y: auto;
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 180px;
+  max-height: 340px;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.commentItemAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.commentBubble {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.7rem 0.95rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.commentAuthorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.commentAuthorRow strong {
+  color: #0f172a;
+}
+
+.commentRole {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.commentTime {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  margin-left: auto;
+}
+
+.commentText {
+  font-size: 0.86rem;
+  color: #334155;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.noCommentsModalState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.noCommentsModalState span {
+  font-size: 2rem;
+}
+
+.noCommentsModalState p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Modal Input Footer */
+.modalCommentInputFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.4rem;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.modalFooterAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.modalCommentInputField {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 0.65rem 1.15rem;
+  color: #0f172a;
+  font-size: 0.88rem;
   outline: none;
-  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.postCommmentContainer input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+.modalCommentInputField:focus {
+  background: #ffffff;
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
 }
 
-.postCommmentContainer_postBtn {
-  background: #2563eb;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+.modalSubmitCommentBtn {
+  background: #0a66c2;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.postCommmentContainer_postBtn:hover {
-  background: #1d4ed8;
+.modalSubmitCommentBtn:hover:not(:disabled) {
+  background: #084e96;
 }
 
-.loadingContainer {
+.modalSubmitCommentBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #0f172a;
+  border: 1px solid #0a66c2;
+  color: #ffffff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-size: 0.88rem;
+  z-index: 2000;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Poll Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modalCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.pollForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.pollForm label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pollInput {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  color: #0f172a;
+  font-size: 0.88rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.pollInput:focus {
+  background: #ffffff;
+  border-color: #0a66c2;
+}
+
+.createPollBtn {
+  background: #0a66c2;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+.createPollBtn:hover {
+  background: #084e96;
+}
+
+.createPollBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================= SKELETON SHIMMER ANIMATIONS ================= */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeletonShimmer {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #e2e8f0 50%,
+    #f1f5f9 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+  border-radius: 6px;
+}
+
+.skeletonCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.skeletonHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skeletonAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.skeletonLineTitle {
+  width: 140px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeletonLineSubtitle {
+  width: 90px;
+  height: 10px;
+  border-radius: 4px;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeletonLineLong {
+  width: 100%;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.skeletonLineMedium {
+  width: 75%;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.skeletonMediaBox {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+}
+
+.skeletonActionsRow {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.skeletonActionItem {
+  width: 70px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* Empty Feed State */
+.emptyFeedCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  gap: 1rem;
+  text-align: center;
+  gap: 0.75rem;
+  color: #64748b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top-color: #0a66c2;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.emptyFeedIcon {
+  font-size: 2.5rem;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.emptyFeedTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
-@media (max-width: 768px) {
-  .header h1 {
-    font-size: 1.75rem;
-  }
-
-  .header p {
-    font-size: 0.938rem;
-  }
+.emptyFeedSubtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 380px;
 }
 
+/* Responsive adjustments */
 @media (max-width: 640px) {
-  .wrapper {
-    padding: 1rem 0.5rem;
+  .heroBanner {
+    flex-direction: column;
+    padding: 1.25rem;
   }
-
-  .CreatePostConatiner {
+  .heroImageContainer {
+    width: 100%;
+    height: 140px;
+  }
+  .composerActionsRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .showcaseBodyMock {
+    flex-direction: column;
     padding: 1rem;
   }
-
-  .singlecard {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
+  .commentModalContent {
+    max-height: 92vh;
+    border-radius: 16px;
   }
+}
 
-  .allCommentsContainer {
-    height: 70vh;
-  }
+/* ================= SKELETON SHIMMER LOADING ================= */
+@keyframes feedShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.composerAvatarSkeleton {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: feedShimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.skeletonHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skeletonAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: feedShimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonShimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%) !important;
+  background-size: 200% 100% !important;
+  animation: feedShimmer 1.5s ease-in-out infinite !important;
+}
+
+.skeletonMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skeletonLineTitle {
+  width: 40%;
+  height: 13px;
+  border-radius: 6px;
+}
+
+.skeletonLineSubtitle {
+  width: 25%;
+  height: 10px;
+  border-radius: 5px;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonLineLong {
+  width: 90%;
+  height: 11px;
+  border-radius: 5px;
+}
+
+.skeletonLineMedium {
+  width: 60%;
+  height: 11px;
+  border-radius: 5px;
+}
+
+.skeletonMediaBox {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+}
+
+.skeletonActionsRow {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.skeletonActionItem {
+  width: 60px;
+  height: 14px;
+  border-radius: 6px;
+}
+
+/* Empty Feed State */
+.emptyFeedCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emptyFeedIcon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.emptyFeedTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.emptyFeedSubtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  max-width: 340px;
+  margin: 0;
+  line-height: 1.5;
 }

@@ -15,9 +15,8 @@ const connectionRequest = new mongoose.Schema({
   },
 });
 
-const ConnectionRequest = mongoose.model(
-  "ConnectionRequest",
-  connectionRequest
-);
+const ConnectionRequest =
+  mongoose.models.ConnectionRequest ||
+  mongoose.model("ConnectionRequest", connectionRequest);
 
 export default ConnectionRequest;

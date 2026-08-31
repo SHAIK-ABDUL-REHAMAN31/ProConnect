@@ -1,0 +1,42 @@
+import { Router } from "express";
+import authRoutes from "../../modules/auth/auth.routes.js";
+import profileRoutes from "../../modules/profiles/profile.routes.js";
+import postRoutes from "../../modules/posts/post.routes.js";
+import commentRoutes from "../../modules/comments/comment.routes.js";
+import connectionRoutes from "../../modules/connections/connection.routes.js";
+import messagingRoutes from "../../modules/messaging/messaging.routes.js";
+import notificationRoutes from "../../modules/notifications/notification.routes.js";
+import jobRoutes from "../../modules/jobs/job.routes.js";
+import applicationRoutes from "../../modules/applications/application.routes.js";
+import searchRoutes from "../../modules/search/search.routes.js";
+import adminRoutes from "../../modules/admin/admin.routes.js";
+import communityRoutes from "../../modules/communities/community.routes.js";
+import eventRoutes from "../../modules/events/event.routes.js";
+import savedRoutes from "../../modules/saved/savedItem.routes.js";
+import recommendationRoutes from "../../modules/recommendations/recommendation.routes.js";
+import settingsRoutes from "../../modules/settings/settings.routes.js";
+import learningRoutes from "../../modules/learning/learning.routes.js";
+import codeCollabRoutes from "../../modules/codecollab/codecollab.routes.js";
+
+const apiV1Router = Router();
+
+apiV1Router.use("/auth", authRoutes);
+apiV1Router.use("/profiles", profileRoutes);
+apiV1Router.use("/posts", postRoutes);
+apiV1Router.use("/comments", commentRoutes);
+apiV1Router.use("/connections", connectionRoutes);
+apiV1Router.use("/messages", messagingRoutes);
+apiV1Router.use("/notifications", notificationRoutes);
+apiV1Router.use("/jobs", jobRoutes);
+apiV1Router.use("/applications", applicationRoutes);
+apiV1Router.use("/search", searchRoutes);
+apiV1Router.use("/admin", adminRoutes);
+apiV1Router.use("/communities", communityRoutes);
+apiV1Router.use("/events", eventRoutes);
+apiV1Router.use("/saved", savedRoutes);
+apiV1Router.use("/recommendations", recommendationRoutes);
+apiV1Router.use("/settings", settingsRoutes);
+apiV1Router.use("/learning", learningRoutes);
+apiV1Router.use("/codecollab", codeCollabRoutes);
+
+export default apiV1Router;

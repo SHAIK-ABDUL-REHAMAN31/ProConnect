@@ -163,17 +163,27 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    let { email, password } = req.body;
+    let { email, username, password } = req.body;
+    const identifier = (email || username || "").trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required." });
+    if (!identifier || !password) {
+      return res.status(400).json({ message: "Email or username and password required." });
     }
 
-    const emailLower = email.trim().toLowerCase();
+    const escapedIdentifier = identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const user = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { username: { $regex: new RegExp(`^${escapedIdentifier}$`, "i") } },
+      ],
+    }).select("+password");
 
-    const user = await User.findOne({ email: emailLower });
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password." });
+      return res.status(400).json({ message: "Invalid email/username or password." });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: "Invalid email/username or password." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -187,6 +197,14 @@ export const login = async (req, res) => {
 
     return res.status(200).json({
       token,
+      user: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+      },
       username: user.username,
       message: "Login successful.",
     });
@@ -284,7 +302,6 @@ export const updateUserprofile = async (req, res) => {
 export const getUserAndProfile = async (req, res) => {
   try {
     const token = req.query.token;
-    console.log("🔹 Token received from frontend:", token);
     const user = await User.findOne({ token: token });
     if (!user) {
       return res.status(401).json({ message: " Unauthorized User" });
@@ -292,7 +309,7 @@ export const getUserAndProfile = async (req, res) => {
 
     const userProfile = await Profile.findOne({ userId: user._id }).populate(
       "userId",
-      "name username email profilePicture"
+      "name username email profilePicture",
     );
     return res.status(200).json({ profile: userProfile });
   } catch (error) {
@@ -334,7 +351,7 @@ export const getAllUsersProfiles = async (req, res) => {
   try {
     const usersProfiles = await Profile.find().populate(
       "userId",
-      "name username email profilePicture"
+      "name username email profilePicture",
     );
     return res.status(200).json({ profiles: usersProfiles });
   } catch (error) {
@@ -350,7 +367,7 @@ export const downloadProfile = async (req, res) => {
     const user_id = req.query.id;
     const userProfile = await Profile.findOne({ userId: user_id }).populate(
       "userId",
-      "name username email profilePicture"
+      "name username email profilePicture",
     );
 
     console.log("user Profile : ", userProfile);
@@ -370,155 +387,159 @@ export const downloadProfile = async (req, res) => {
 };
 
 export const sendConnnectionRequest = async (req, res) => {
-  // Implementation for sending connection requests
-  const { token, connectionId } = req.body;
-
   try {
+    const { token, connectionId } = req.body;
+    if (!token || !connectionId) {
+      return res.status(400).json({ message: "Token and connectionId are required." });
+    }
+
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "User Not Found." });
+      return res.status(401).json({ message: "User Not Found / Unauthorized." });
     }
 
-    const connectionUser = await User.findOne({ _id: connectionId });
+    if (user._id.toString() === connectionId.toString()) {
+      return res.status(400).json({ message: "Cannot send connection request to yourself." });
+    }
+
+    const connectionUser = await User.findById(connectionId);
     if (!connectionUser) {
-      return res.status(404).json({ message: "Connection User Not Found." });
+      return res.status(404).json({ message: "Target connection user not found." });
     }
 
-    // Check if a connection request already exists
+    // Check bidirectional connection
     const existingRequest = await ConnectionRequest.findOne({
-      userId: user._id,
-      connectionId: connectionId,
+      $or: [
+        { userId: user._id, connectionId: connectionId },
+        { userId: connectionId, connectionId: user._id },
+      ],
     });
 
     if (existingRequest) {
-      return res
-        .status(400)
-        .json({ message: "Connection Request Already Sent." });
+      if (existingRequest.status_accepted === true) {
+        return res.status(400).json({ message: "You are already connected with this user." });
+      }
+      return res.status(400).json({ message: "Connection request already pending." });
     }
+
     const newConnectionRequest = new ConnectionRequest({
       userId: user._id,
       connectionId: connectionId,
+      status_accepted: null,
     });
     await newConnectionRequest.save();
-    return res.status(200).json({ message: "Connection Request Sent." });
+
+    return res.status(200).json({
+      message: "Connection Request Sent Successfully.",
+      connection: newConnectionRequest,
+    });
   } catch (error) {
     console.error("Connection request error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during connection request." });
+    return res.status(500).json({ message: "Server error during connection request." });
   }
 };
 
 export const getMyConnectionsRequest = async (req, res) => {
-  const token = req.query.token;
   try {
+    const token = req.query.token;
+    if (!token) {
+      return res.status(401).json({ message: "Token required." });
+    }
+
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user." });
     }
 
     const connections = await ConnectionRequest.find({
       $or: [{ userId: user._id }, { connectionId: user._id }],
     })
       .populate("userId", "name username email profilePicture")
-      .populate("connectionId", "name username email profilePicture");
+      .populate("connectionId", "name username email profilePicture")
+      .sort({ _id: -1 });
 
     return res.status(200).json({ connections });
   } catch (error) {
     console.error("Get connections error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during fetching connections." });
+    return res.status(500).json({ message: "Server error during fetching connections." });
   }
 };
 
 export const whatAreMyConnections = async (req, res) => {
   try {
     const { token } = req.query;
+    if (!token) {
+      return res.status(401).json({ message: "Token required." });
+    }
 
     const user = await User.findOne({ token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user" });
+      return res.status(401).json({ message: "Unauthorized user." });
     }
 
     const connections = await ConnectionRequest.find({
       $or: [{ userId: user._id }, { connectionId: user._id }],
     })
       .populate("userId", "name username email profilePicture")
-      .populate("connectionId", "name username email profilePicture");
+      .populate("connectionId", "name username email profilePicture")
+      .sort({ _id: -1 });
 
     return res.status(200).json({ connections });
   } catch (error) {
     console.error("Get connections error:", error);
-    return res.status(500).json({
-      message: "Server error while fetching connections",
-    });
+    return res.status(500).json({ message: "Server error while fetching connections." });
   }
 };
 
 export const acceptConnectionRequest = async (req, res) => {
-  const { token, requestId, action_type } = req.body;
-  console.log("action_type ===== ", action_type);
-  console.log("token form acceptConnectionRequest", token);
   try {
+    const { token, requestId, connectionId, action_type } = req.body;
+    const reqId = requestId || connectionId;
+
+    if (!token || !reqId) {
+      return res.status(400).json({ message: "Token and requestId are required." });
+    }
+
     const user = await User.findOne({ token: token });
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user." });
     }
-    const connectionRequest = await ConnectionRequest.findOne({
-      _id: requestId,
-    });
+
+    const connectionRequest = await ConnectionRequest.findById(reqId);
     if (!connectionRequest) {
       return res.status(404).json({ message: "Connection Request Not Found." });
     }
 
-    if (action_type === "accept") {
-      connectionRequest.status_accepted = true;
-    } else {
-      connectionRequest.status_accepted = false;
-    }
-
+    const isAccepted = action_type === "accept" || action_type === true;
+    connectionRequest.status_accepted = isAccepted;
     await connectionRequest.save();
-    return res
-      .status(200)
-      .json({ message: "Connection Request Responded Successfully." });
+
+    return res.status(200).json({
+      message: isAccepted
+        ? "Connection request accepted successfully."
+        : "Connection request declined.",
+      connection: connectionRequest,
+    });
   } catch (error) {
     console.error("Accept connection request error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during accepting connection request." });
+    return res.status(500).json({ message: "Server error during accepting connection request." });
   }
 };
+
 
 export const getuserProfileBasedOnUsername = async (req, res) => {
   try {
     const incomingRaw = decodeURIComponent(req.query.username || "");
     const incoming = incomingRaw.trim().toLowerCase();
-    console.log(
-      "Incoming:",
-      JSON.stringify(incomingRaw),
-      JSON.stringify(incoming)
-    );
 
     const allUsers = await User.find({}, "username _id");
-    for (const u of allUsers) {
-      console.log(
-        "DB:",
-        JSON.stringify(u.username),
-        JSON.stringify(u.username.trim().toLowerCase())
-      );
-    }
     const matchedUser = allUsers.find(
       (u) =>
         typeof u.username === "string" &&
-        u.username.trim().toLowerCase() === incoming
+        u.username.trim().toLowerCase() === incoming,
     );
 
     if (!matchedUser) {
-      console.log(
-        `No match. Incoming="${incoming}", all usernames=`,
-        allUsers.map((u) => u.username)
-      );
       return res.status(404).json({ message: "User not found" });
     }
 

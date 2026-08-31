@@ -13,6 +13,22 @@ const educationSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  startDate: {
+    type: String,
+    default: "",
+  },
+  endDate: {
+    type: String,
+    default: "",
+  },
+  grade: {
+    type: String,
+    default: "",
+  },
+  description: {
+    type: String,
+    default: "",
+  },
 });
 
 const workSchema = new mongoose.Schema({
@@ -28,29 +44,65 @@ const workSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-});
-
-const ProfileSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  bio: {
+  location: {
     type: String,
     default: "",
   },
-  currentPost: {
+  startDate: {
     type: String,
     default: "",
   },
-  pastWork: {
-    type: [workSchema],
-    default: [],
+  endDate: {
+    type: String,
+    default: "",
   },
-  education: {
-    type: [educationSchema],
-    default: [],
+  description: {
+    type: String,
+    default: "",
   },
 });
 
-export const Profile = mongoose.model("Profile", ProfileSchema);
+const ProfileSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
+    about: {
+      type: String,
+      default: "",
+    },
+    currentPost: {
+      type: String,
+      default: "",
+    },
+    location: {
+      type: String,
+      default: "",
+    },
+    coverPicture: {
+      type: String,
+      default: "",
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    pastWork: {
+      type: [workSchema],
+      default: [],
+    },
+    education: {
+      type: [educationSchema],
+      default: [],
+    },
+  },
+  { timestamps: true }
+);
+
+export const Profile = mongoose.models.Profile || mongoose.model("Profile", ProfileSchema);

@@ -3,27 +3,29 @@ import UserLayout from "@/layout/UserLayout";
 import DashBoardLayout from "@/layout/dashboardLayout";
 import { useDispatch, useSelector } from "react-redux";
 import { getAboutUser, getAllUsers } from "@/config/redux/action/postAction";
+import {
+  sendConnectionRequest,
+  getMyConnectionsRequest,
+  getConnectionsRequest,
+} from "@/config/redux/action/userAction";
 import styles from "./index.module.css";
-import { BASE_URL } from "@/config";
 import { useRouter } from "next/router";
+import Head from "next/head";
 
 export default function DiscoverPage() {
   const dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
   const router = useRouter();
-  const [userProfile, setUserProfile] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) dispatch(getAboutUser({ token }));
-  }, []);
-
-  useEffect(() => {
-    if (authState?.user) {
-      setUserProfile(authState.user);
+    if (token) {
+      dispatch(getAboutUser({ token }));
+      dispatch(getMyConnectionsRequest(token));
+      dispatch(getConnectionsRequest(token));
     }
-  }, [authState.user]);
+  }, []);
 
   useEffect(() => {
     if (!authState.all_profiles_fetched) {
@@ -45,37 +47,62 @@ export default function DiscoverPage() {
     authState?.user?.userId ||
     authState?.user?._id;
 
+  const rawConnections = [
+    ...(Array.isArray(authState.connectionRequests) ? authState.connectionRequests : []),
+    ...(Array.isArray(authState.connections) ? authState.connections : []),
+  ];
+
+  const getConnectionStatus = (targetUserId) => {
+    const tId = targetUserId?.toString();
+    const match = rawConnections.find((c) => {
+      const uId = (c.userId?._id || c.userId)?.toString();
+      const cId = (c.connectionId?._id || c.connectionId)?.toString();
+      return uId === tId || cId === tId;
+    });
+
+    if (!match) return "NONE";
+    return match.status_accepted === true ? "CONNECTED" : "PENDING";
+  };
+
+  const handleConnect = async (e, targetUserId) => {
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    await dispatch(sendConnectionRequest({ token, connectionId: targetUserId }));
+  };
+
   const filteredUsers = authState.all_profiles_fetched
     ? authState.all_users
-        .filter((profiles) => profiles.userId._id !== currentUserId)
-        .filter((profiles) => {
-          if (!searchQuery.trim()) return true;
-          return profiles.userId.username
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
-        })
+      .filter((profiles) => {
+        const profileUserId = profiles.userId?._id || profiles.userId;
+        return profileUserId?.toString() !== currentUserId?.toString();
+      })
+      .filter((profiles) => {
+        if (!searchQuery.trim()) return true;
+        return (
+          profiles.userId?.username
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          profiles.userId?.name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
+        );
+      })
     : [];
-
-  if (currentUserId == undefined) {
-    return (
-      <UserLayout>
-        <DashBoardLayout>
-          <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <h3>Loading...</h3>
-          </div>
-        </DashBoardLayout>
-      </UserLayout>
-    );
-  }
 
   return (
     <UserLayout>
+      <Head>
+        <title>Discover People & Connect | ProConnect 2.0</title>
+      </Head>
       <DashBoardLayout>
         <div className={styles.discoverContainer}>
           <div className={styles.header}>
             <h1>Discover People</h1>
-            <p>Connect with professionals in your network</p>
+            <p>Connect with industry leaders, peers, and collaborators in your network</p>
 
             <div className={styles.searchContainer}>
               <div className={styles.searchBox}>
@@ -97,7 +124,7 @@ export default function DiscoverPage() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search by username..."
+                  placeholder="Search by name or username..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={styles.searchInput}
@@ -129,44 +156,98 @@ export default function DiscoverPage() {
 
           <div className={styles.cardsGrid}>
             {filteredUsers.length > 0 ? (
-              filteredUsers.map((profiles) => (
-                <div
-                  key={profiles._id}
-                  className={styles.profileCard}
-                  onClick={() => {
-                    router.push(`/view_profile/${profiles.userId.username}`);
-                  }}
-                >
-                  <div className={styles.cardHeader}>
-                    <div className={styles.coverBg}></div>
-                  </div>
+              filteredUsers.map((profiles) => {
+                const targetId = profiles.userId?._id || profiles.userId;
+                const connectionStatus = getConnectionStatus(targetId);
 
-                  <div className={styles.cardBody}>
-                    <div className={styles.avatarContainer}>
-                      <img
-                        className={styles.avatar}
-                        src={getImageUrl(profiles.userId.profilePicture)}
-                        alt={profiles.userId.username}
-                      />
+                return (
+                  <div
+                    key={profiles._id}
+                    className={styles.profileCard}
+                    onClick={() => {
+                      router.push(`/view_profile/${profiles.userId?.username}`);
+                    }}
+                  >
+                    <div
+                      className={styles.cardHeader}
+                      style={{
+                        backgroundImage: `url(${profiles.coverPicture || profiles.bannerUrl || "https://images.pexels.com/photos/733852/pexels-photo-733852.jpeg"})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    >
+                      <div className={styles.coverBg} style={{ background: "rgba(0,0,0,0.15)" }}></div>
                     </div>
 
-                    <div className={styles.userInfo}>
-                      <h2 className={styles.userName}>
-                        {profiles.userId.username}
-                      </h2>
-                      <p className={styles.userEmail}>
-                        {profiles.userId.email}
-                      </p>
-                      <div className={styles.bio}>
-                        {profiles.bio ||
-                          "Bio Is Not Available For This ProConnect User."}
+                    <div className={styles.cardBody}>
+                      <div className={styles.avatarContainer}>
+                        <img
+                          className={styles.avatar}
+                          src={getImageUrl(profiles.userId?.profilePicture)}
+                          alt={profiles.userId?.username || "User"}
+                        />
+                      </div>
+
+                      <div className={styles.userInfo}>
+                        <h2 className={styles.userName}>
+                          {profiles.userId?.name || profiles.userId?.username}
+                        </h2>
+                        <p className={styles.userEmail}>
+                          @{profiles.userId?.username}
+                        </p>
+                        <div className={styles.bio}>
+                          {profiles.bio ||
+                            profiles.currentPost ||
+                            "Professional on ProConnect."}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "0.5rem", width: "100%" }}>
+                        {connectionStatus === "CONNECTED" ? (
+                          <button
+                            className={styles.connectBtn}
+                            style={{ background: "#dcfce7", color: "#166534", border: "1px solid #86efac" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/messages?userId=${targetId}`);
+                            }}
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Connected</span>
+                          </button>
+                        ) : connectionStatus === "PENDING" ? (
+                          <button
+                            className={styles.connectBtn}
+                            style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                            disabled
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Pending</span>
+                          </button>
+                        ) : (
+                          <button
+                            className={styles.connectBtn}
+                            onClick={(e) => handleConnect(e, targetId)}
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                              <circle cx="8.5" cy="7" r="4" />
+                              <line x1="20" y1="8" x2="20" y2="14" />
+                              <line x1="23" y1="11" x2="17" y2="11" />
+                            </svg>
+                            <span>Connect</span>
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <button className={styles.connectBtn}>View Profile</button>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className={styles.noResults}>No users found.</p>
             )}

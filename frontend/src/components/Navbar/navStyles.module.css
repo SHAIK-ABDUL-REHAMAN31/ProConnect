@@ -1,77 +1,376 @@
-.navbar {
+.navbarWrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.65rem 2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.navbarContent {
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 2rem;
+}
+
+/* Brand Logo */
+.brand {
+  display: flex;
   align-items: center;
-  padding: 10px 20px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
-.navbarOptionsContainer {
-  display: flex;
-  gap: 15px;
+.brandPro {
+  color: #0f172a;
+  font-weight: 800;
 }
 
-.buttonClass {
+.brandConnect {
+  color: #0a66c2;
+  font-weight: 800;
+}
+
+/* Central Search Bar */
+.searchContainer {
+  flex: 1;
+  max-width: 600px;
+  position: relative;
   display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  width: 100%;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 0.65rem 3rem 0.65rem 1.25rem;
+  color: #0f172a;
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: #64748b;
+}
+
+.searchInput:focus {
+  background: #ffffff;
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
+}
+
+.searchIconBtn {
+  position: absolute;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.searchIconBtn:hover {
+  color: #0a66c2;
+}
+
+.searchIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Right Actions */
+.rightActions {
+  display: flex;
   align-items: center;
-  width: 8rem;
-  height: 2.5rem;
-  background-color: #0a66c2;
-  color: white;
-  border-radius: 2rem;
-  cursor: pointer;
-  background: linear-gradient(90deg, #202c92 0%, #1cb5e0 100%);
+  gap: 1.25rem;
 }
-.acceptButton {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #fff;
+
+.iconButton {
+  position: relative;
+  background: transparent;
   border: none;
-  border-radius: 12px;
+  color: #475569;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.iconButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.iconButton:hover {
+  background: #eff6ff;
+  color: #0a66c2;
+}
+
+.badgeDot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+/* Profile Pill */
+.profileDropdownWrapper {
+  position: relative;
+}
+
+.profilePill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.6rem 0.35rem 0.4rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.profilePill:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.profileAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #0a66c2;
+}
+
+.profileDetails {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  max-width: 140px;
+  overflow: hidden;
+}
+
+.profileName {
+  color: #0f172a;
+  font-size: 0.88rem;
   font-weight: 600;
-  padding: 0.5rem 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileRole {
+  color: #64748b;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevronIcon {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  animation: fadeIn 0.18s ease-out;
+  z-index: 1010;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdownHeader:hover {
+  background: #f8fafc;
+}
+
+.dropdownAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dropdownUserInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dropdownUserInfo strong {
+  color: #0f172a;
   font-size: 0.9rem;
-  transition: all 0.25s ease;
-  align-self: center;
-  width: fit-content;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
-.acceptButton:hover {
-  background: linear-gradient(135deg, #0056b3, #45515c);
+.dropdownUserInfo span {
+  color: #64748b;
+  font-size: 0.76rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
-.acceptButton:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3);
+.dropdownDivider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.35rem 0;
 }
 
-.LogOutButton {
-  background: linear-gradient(135deg, #ea192a, #ed1f1f);
-  color: #fff;
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  color: #334155;
+  background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 500;
   cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.dropdownItem:hover {
+  background: #eff6ff;
+  color: #0a66c2;
+}
+
+.dropdownLogout {
+  color: #dc2626;
+}
+
+.dropdownLogout:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dropdownLogin {
+  color: #0a66c2;
   font-weight: 600;
-  padding: 0.5rem 1.2rem;
-  font-size: 0.9rem;
-  transition: all 0.25s ease;
-  align-self: center;
-  width: fit-content;
 }
 
-.LogOutButton:hover {
-  background: linear-gradient(135deg, #ea192a, #3f2323);
+.dropdownLogin:hover {
+  background: #eff6ff;
+  color: #084e96;
 }
 
-.LogOutButton:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3);
+/* Profile Pill Skeleton Loading */
+@keyframes navShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-@media screen and (max-width: 600px) {
-  .acceptButton {
+.skeletonAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: navShimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeletonName {
+  width: 80px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: navShimmer 1.5s ease-in-out infinite;
+  margin-bottom: 4px;
+}
+
+.skeletonRole {
+  width: 56px;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: navShimmer 1.5s ease-in-out infinite;
+}
+
+@media (max-width: 900px) {
+  .navbarWrapper {
+    padding: 0.6rem 1rem;
+  }
+  .searchContainer {
+    max-width: 320px;
+  }
+  .profileDetails {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .searchContainer {
     display: none;
   }
 }

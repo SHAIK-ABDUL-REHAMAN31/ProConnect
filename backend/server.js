@@ -1,33 +1,26 @@
-import dotenv from "dotenv";
-dotenv.config();
+import http from "http";
+import app from "./src/app.js";
+import { connectDatabase } from "./src/config/database.js";
+import { socketGateway } from "./src/infrastructure/websocket/socketGateway.js";
+import { ENV } from "./src/config/env.js";
 
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
-import postRoutes from "./routes/posts.routes.js";
-import userRoutes from "./routes/user.routes.js";
+const server = http.createServer(app);
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// Initialize Socket.IO Realtime Gateway
+socketGateway.initialize(server);
 
-app.use(postRoutes);
-app.use(userRoutes);
-app.use("/uploads", express.static("uploads"));
-
-const start = async () => {
+const startServer = async () => {
   try {
-    await mongoose.connect(
-      "mongodb+srv://mrabbu985_db_user:A7W57zD5FHaYdf94@linkedin-clone.qt5fpjt.mongodb.net/?appName=LinkedIn-clone"
-    );
-    const PORT = process.env.PORT || 3030;
+    await connectDatabase();
 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    server.listen(ENV.PORT, () => {
+      console.log(`[ProConnect 2.0] Server running in ${ENV.NODE_ENV} mode on port ${ENV.PORT}`);
+      console.log(`[ProConnect 2.0] API v1 available at http://localhost:${ENV.PORT}/api/v1`);
     });
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error("[ProConnect 2.0] Failed to start server:", error);
+    process.exit(1);
   }
 };
 
-start();
+startServer();
