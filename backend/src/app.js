@@ -15,14 +15,28 @@ const app = express();
 app.use(securityHeaders);
 
 // 2. CORS Configuration
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://linkedin-clone-frontend-psi.vercel.app",
+  "https://pro-connect-eta.vercel.app",
+  ENV.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://linkedin-clone-frontend-psi.vercel.app",
-      "https://proconnect-hm0q.onrender.com",
-    ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );

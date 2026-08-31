@@ -13,11 +13,18 @@ class SocketGateway {
   initialize(httpServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: [
-          "http://localhost:3000",
-          "https://linkedin-clone-frontend-psi.vercel.app",
-          ENV.FRONTEND_URL,
-        ],
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          if (
+            origin.includes("localhost") ||
+            origin.endsWith(".vercel.app") ||
+            origin === ENV.FRONTEND_URL ||
+            origin === "https://pro-connect-eta.vercel.app"
+          ) {
+            return callback(null, true);
+          }
+          return callback(null, true); // Allow connection
+        },
         methods: ["GET", "POST"],
         credentials: true,
       },
