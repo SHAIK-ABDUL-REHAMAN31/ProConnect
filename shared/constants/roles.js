@@ -1,0 +1,10 @@
+export const ROLES = {
+  USER: "USER",
+  RECRUITER: "RECRUITER",
+  COMPANY_ADMIN: "COMPANY_ADMIN",
+  MODERATOR: "MODERATOR",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN",
+};
+
+export default ROLES;

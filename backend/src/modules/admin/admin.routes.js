@@ -2,7 +2,7 @@ import { Router } from "express";
 import { adminController } from "./admin.controller.js";
 import { authenticate } from "../../core/middleware/auth.middleware.js";
 import { requireRole } from "../../core/middleware/rbac.middleware.js";
-import { ROLES } from "../../../../shared/constants/roles.js";
+import { ROLES } from "../../core/constants/roles.js";
 
 const router = Router();
 

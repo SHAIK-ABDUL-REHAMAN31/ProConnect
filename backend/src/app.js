@@ -7,24 +7,10 @@ import legacyUserRoutes from "../routes/user.routes.js";
 import { errorHandler } from "./core/middleware/error.middleware.js";
 import { securityHeaders } from "./core/middleware/security.middleware.js";
 import { sanitizeInputs } from "./core/middleware/sanitize.middleware.js";
-import { connectDatabase } from "./config/database.js";
+import { generalApiLimiter } from "./core/middleware/rateLimiter.middleware.js";
+import { ENV } from "./config/env.js";
 
 const app = express();
-
-// Ensure Database Connection for Serverless Functions
-app.use(async (req, res, next) => {
-  try {
-    await connectDatabase();
-    next();
-  } catch (error) {
-    console.error("[Serverless] Database connection error:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Database connection failed",
-      error: error.message,
-    });
-  }
-});
 
 // 1. Security HTTP Headers (Helmet Equivalent)
 app.use(securityHeaders);
