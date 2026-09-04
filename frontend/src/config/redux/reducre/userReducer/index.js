@@ -3,6 +3,7 @@ import {
   getConnectionsRequest,
   getMyConnectionsRequest,
   loginUser,
+  googleLoginUser,
   registerUser,
   sendConnectionRequest,
 } from "../../action/userAction";
@@ -63,6 +64,25 @@ const authSlice = createSlice({
         state.loggedIn = false;
         state.message = action.payload;
       })
+
+      .addCase(googleLoginUser.pending, (state) => {
+        state.isLoading = true;
+        state.message = "Signing in with Google...";
+      })
+
+      .addCase(googleLoginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.loggedIn = true;
+        state.message = "Google Sign-In successful!";
+      })
+
+      .addCase(googleLoginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.loggedIn = false;
+        state.message = action.payload;
+      })
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.message = "Registering user...";
@@ -72,8 +92,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.isError = false;
-        state.loggedIn = false;
-        state.message = "Registration successful Please Log in...";
+        if (action.payload?.token) {
+          state.loggedIn = true;
+          state.user = action.payload.user;
+          state.message = "Registration successful! Welcome to ProConnect.";
+        } else {
+          state.loggedIn = false;
+          state.message = "Registration successful. Please log in.";
+        }
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;

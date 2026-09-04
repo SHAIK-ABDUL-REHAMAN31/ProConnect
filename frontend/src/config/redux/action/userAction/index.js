@@ -25,19 +25,76 @@ export const loginUser = createAsyncThunk(
   },
 );
 
+export const googleLoginUser = createAsyncThunk(
+  "user/googleLoginUser",
+  async (googleData, thunkAPI) => {
+    try {
+      const response = await clientServer.post("/api/v1/auth/google", googleData);
+      const data = response.data?.data || response.data;
+      const token = data?.token || data?.accessToken;
+      const user = data?.user;
+
+      if (token) {
+        localStorage.setItem("token", token);
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+      }
+
+      return thunkAPI.fulfillWithValue({
+        token,
+        user,
+      });
+    } catch (error) {
+      const rawMsg =
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string" &&
+        !error.response.data.includes("<!DOCTYPE")
+          ? error.response.data
+          : null);
+      return thunkAPI.rejectWithValue(
+        rawMsg || "Google authentication failed. Please try again."
+      );
+    }
+  },
+);
+
 export const registerUser = createAsyncThunk(
   "user/register",
   async (user, thunkAPI) => {
     try {
-      const response = await clientServer.post("/register", {
+      const response = await clientServer.post("/api/v1/auth/register", {
         name: user.name,
         username: user.username,
         email: user.email,
         password: user.password,
       });
-      return thunkAPI.fulfillWithValue(response.data);
+      const data = response.data?.data || response.data;
+      const token = data?.token || data?.accessToken;
+      const userData = data?.user;
+
+      if (token) {
+        localStorage.setItem("token", token);
+        if (userData) {
+          localStorage.setItem("user", JSON.stringify(userData));
+        }
+      }
+
+      return thunkAPI.fulfillWithValue({
+        token,
+        user: userData,
+        message: data?.message || "Account created and verified! Welcome to ProConnect.",
+      });
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data);
+      const rawMsg =
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string" &&
+        !error.response.data.includes("<!DOCTYPE")
+          ? error.response.data
+          : null);
+      return thunkAPI.rejectWithValue(
+        rawMsg || "Registration failed. Please try again."
+      );
     }
   },
 );

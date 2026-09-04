@@ -71,27 +71,45 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token) {
-      dispatch(getAboutUser({ token }));
-      dispatch(getAllPosts());
+    const cachedUser = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    if (!token) {
+      router.push("/login");
+      return;
     }
-  }, [dispatch]);
+    if (cachedUser && !userProfile) {
+      try {
+        const parsed = JSON.parse(cachedUser);
+        setUserProfile({
+          userId: parsed,
+          bio: parsed.bio || "",
+          currentPost: parsed.headline || parsed.currentPost || "",
+          location: parsed.location || "Global",
+          pastWork: parsed.pastWork || [],
+          education: parsed.education || [],
+          skills: parsed.skills || [],
+        });
+      } catch (e) {}
+    }
+    dispatch(getAboutUser({ token }));
+    dispatch(getAllPosts());
+  }, [dispatch, router]);
 
   useEffect(() => {
     if (authState?.user) {
-      setUserProfile(authState.user);
+      const p = authState.user;
+      setUserProfile(p);
       setInfoForm({
-        name: authState.user?.userId?.name || "",
-        currentPost: authState.user?.currentPost || authState.user?.headline || "",
-        location: authState.user?.location || "Global",
+        name: p?.userId?.name || p?.name || "",
+        currentPost: p?.currentPost || p?.headline || "",
+        location: p?.location || "Global",
       });
-      setBioText(authState.user?.bio || authState.user?.about || "");
+      setBioText(p?.bio || p?.about || "");
     }
   }, [authState.user]);
 
   // Filter posts made by this user
   const userPosts = useMemo(() => {
-    const username = authState?.user?.userId?.username;
+    const username = authState?.user?.userId?.username || authState?.user?.username;
     const userId = authState?.user?.userId?._id || authState?.user?._id;
     if (!username && !userId) return [];
     return (postReducer.posts || []).filter((post) => {
@@ -108,7 +126,26 @@ export default function ProfilePage() {
     return <FullPageLoader text="Loading your professional profile..." />;
   }
 
-  const { userId, bio, currentPost, location, pastWork = [], education = [], skills = [], coverPicture } = userProfile;
+  const userId =
+    typeof userProfile?.userId === "object" && userProfile?.userId !== null
+      ? userProfile.userId
+      : {
+          _id: userProfile?._id || userProfile?.id || "user-id",
+          name: userProfile?.name || "Professional User",
+          username: userProfile?.username || "user",
+          email: userProfile?.email || "",
+          profilePicture: userProfile?.profilePicture || "default.jpg",
+        };
+
+  const {
+    bio = "",
+    currentPost = "",
+    location = "",
+    pastWork = [],
+    education = [],
+    skills = [],
+    coverPicture = "",
+  } = userProfile;
 
   const getImageUrl = (imagePath, name = "User") => {
     if (!imagePath)
@@ -712,11 +749,23 @@ export default function ProfilePage() {
 
                       <p className={styles.postBodyText}>{post.body}</p>
 
-                      {post.media && (
-                        <div className={styles.postMediaWrapper}>
-                          <img src={getImageUrl(post.media)} alt="Post Attachment" />
-                        </div>
-                      )}
+                      {post.media &&
+                        typeof post.media === "string" &&
+                        post.media !== "null" &&
+                        post.media !== "undefined" &&
+                        post.media.trim() !== "" && (
+                          <div className={styles.postMediaWrapper}>
+                            <img
+                              src={getImageUrl(post.media)}
+                              alt=""
+                              onError={(e) => {
+                                if (e.currentTarget.parentElement) {
+                                  e.currentTarget.parentElement.style.display = "none";
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
 
                       <div className={styles.postFooterBar}>
                         <button

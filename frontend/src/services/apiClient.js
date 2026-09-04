@@ -23,9 +23,15 @@ apiClient.interceptors.request.use((config) => {
 
 // API endpoint methods
 export const api = {
-  // Auth
+  // Auth & Email Verification
   login: (credentials) => apiClient.post("/auth/login", credentials),
   register: (userData) => apiClient.post("/auth/register", userData),
+  googleAuth: (googleData) => apiClient.post("/auth/google", googleData),
+  checkEmailDns: (email) => apiClient.post("/auth/verify-dns", { email }),
+  checkUsername: (username, config) =>
+    apiClient.get("/auth/check-username", { params: { username }, ...config }),
+  sendEmailOtp: (data) => apiClient.post("/auth/send-otp", data),
+  verifyEmailOtp: (data) => apiClient.post("/auth/verify-otp", data),
   getMe: () => apiClient.get("/auth/me"),
   uploadAvatar: (formData) =>
     apiClient.post("/auth/avatar", formData, {

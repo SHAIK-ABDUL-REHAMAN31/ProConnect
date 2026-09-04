@@ -569,16 +569,25 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  {post.media && (
-                    <div className={styles.postMediaContainer}>
-                      <img
-                        src={getImageUrl(post.media)}
-                        alt="Post media"
-                        className={styles.postMediaImg}
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
+                  {post.media &&
+                    typeof post.media === "string" &&
+                    post.media !== "null" &&
+                    post.media !== "undefined" &&
+                    post.media.trim() !== "" && (
+                      <div className={styles.postMediaContainer}>
+                        <img
+                          src={getImageUrl(post.media)}
+                          alt=""
+                          className={styles.postMediaImg}
+                          loading="lazy"
+                          onError={(e) => {
+                            if (e.currentTarget.parentElement) {
+                              e.currentTarget.parentElement.style.display = "none";
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
 
                   <div className={styles.postStatsBar}>
                     <div className={styles.reactionsCount}>

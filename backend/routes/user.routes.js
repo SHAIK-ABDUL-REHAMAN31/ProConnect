@@ -18,6 +18,7 @@ import { whatAreMyConnections } from "../controllers/userConteroller.js";
 import { acceptConnectionRequest } from "../controllers/userConteroller.js";
 import { profileUpload } from "../config/multer.js";
 import { authRateLimiter } from "../src/core/middleware/rateLimiter.middleware.js";
+import { authController } from "../src/modules/auth/auth.controller.js";
 const router = Router();
 
 router
@@ -26,6 +27,13 @@ router
 
 router.route("/register").post(authRateLimiter, register);
 router.route("/login").post(authRateLimiter, login);
+router.post("/auth/google", authRateLimiter, (req, res, next) => authController.googleAuth(req, res, next));
+router.post("/google_auth", authRateLimiter, (req, res, next) => authController.googleAuth(req, res, next));
+router.get("/check_username", (req, res, next) => authController.checkUsername(req, res, next));
+router.get("/auth/check-username", (req, res, next) => authController.checkUsername(req, res, next));
+router.post("/verify_dns", (req, res, next) => authController.checkDns(req, res, next));
+router.post("/send_otp", authRateLimiter, (req, res, next) => authController.sendOtp(req, res, next));
+router.post("/verify_otp", authRateLimiter, (req, res, next) => authController.verifyOtp(req, res, next));
 router.route("/update_user_profile").post(updateUserprofile);
 router.route("/get_user_and_profile").get(getUserAndProfile);
 router.route("/update_user_data").post(updateUserData);

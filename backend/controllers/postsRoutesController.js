@@ -2,6 +2,7 @@ import User from "../models/userSchema.js";
 import Post from "../models/postsSchema.js";
 import Comment from "../models/commentsSchema.js";
 import { v2 as cloudinary } from "cloudinary";
+import { findUserByToken } from "./userConteroller.js";
 
 export const ActiveCheck = async (req, res) => {
   return res.status(200).json({ message: "Server status Running " });
@@ -11,7 +12,7 @@ export const createPost = async (req, res) => {
   const { token, body } = req.body;
 
   try {
-    const user = await User.findOne({ token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -26,8 +27,14 @@ export const createPost = async (req, res) => {
 
       mediaUrl = uploadResult.secure_url;
       fileType = req.file.mimetype.split("/")[1] || "";
-    } else if (req.body.media) {
-      mediaUrl = req.body.media;
+    } else if (
+      req.body.media &&
+      req.body.media !== "null" &&
+      req.body.media !== "undefined" &&
+      typeof req.body.media === "string" &&
+      req.body.media.trim() !== ""
+    ) {
+      mediaUrl = req.body.media.trim();
     }
 
     const newPost = new Post({
@@ -54,11 +61,30 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
   try {
+    // Clean up any historical bad 'null'/'undefined' strings in MongoDB
+    await Post.updateMany(
+      { media: { $in: ["null", "undefined"] } },
+      { $set: { media: "" } }
+    );
+
     const posts = await Post.find({ active: { $ne: false } })
       .populate("userId", "name username email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
-    return res.status(200).json({ posts: posts || [] });
+
+    const cleanedPosts = (posts || []).map((p) => {
+      if (
+        !p.media ||
+        p.media === "null" ||
+        p.media === "undefined" ||
+        (typeof p.media === "string" && !p.media.trim())
+      ) {
+        p.media = "";
+      }
+      return p;
+    });
+
+    return res.status(200).json({ posts: cleanedPosts });
   } catch (error) {
     console.error("Get all posts error:", error);
     return res.status(200).json({ posts: [], message: "No posts available." });
@@ -68,7 +94,7 @@ export const getAllPosts = async (req, res) => {
 export const deletePost = async (req, res) => {
   const { token, postId } = req.body;
   try {
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -98,7 +124,7 @@ export const deletePost = async (req, res) => {
 export const commentOnpost = async (req, res) => {
   const { token, postId, commentBody } = req.body;
   try {
-    const user = await User.findOne({ token: token }).select("_id");
+    const user = await findUserByToken(token);
     if (!user) {
       return res
         .status(404)
@@ -147,7 +173,7 @@ export const getCommentsOnPost = async (req, res) => {
 export const deleteUserComment = async (req, res) => {
   const { token, commentId } = req.body;
   try {
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }

@@ -432,11 +432,23 @@ export default function ViewProfilePage({ userProfile }) {
 
                     <p className={styles.postBodyText}>{post.body}</p>
 
-                    {post.media && (
-                      <div className={styles.postMediaWrapper}>
-                        <img src={getImageUrl(post.media)} alt="Post Attachment" />
-                      </div>
-                    )}
+                    {post.media &&
+                      typeof post.media === "string" &&
+                      post.media !== "null" &&
+                      post.media !== "undefined" &&
+                      post.media.trim() !== "" && (
+                        <div className={styles.postMediaWrapper}>
+                          <img
+                            src={getImageUrl(post.media)}
+                            alt=""
+                            onError={(e) => {
+                              if (e.currentTarget.parentElement) {
+                                e.currentTarget.parentElement.style.display = "none";
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
 
                     <div className={styles.postFooterBar}>
                       <span>❤️ {post.likesCount || 0} Likes</span>

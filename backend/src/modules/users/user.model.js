@@ -25,13 +25,29 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: function () {
+        return this.authProvider === "local";
+      },
       select: false, // Don't return password by default
     },
     role: {
       type: String,
       enum: ["USER", "RECRUITER", "COMPANY_ADMIN", "MODERATOR", "ADMIN", "SUPER_ADMIN"],
       default: "USER",
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
     },
     headline: {
       type: String,

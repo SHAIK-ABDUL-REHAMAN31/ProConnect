@@ -50,8 +50,10 @@ export const createPost = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("token", localStorage.getItem("token"));
-      formData.append("body", body);
-      formData.append("media", media);
+      formData.append("body", body || "");
+      if (media && media !== "null" && media !== "undefined") {
+        formData.append("media", media);
+      }
 
       const response = await clientServer.post("/create_post", formData);
 

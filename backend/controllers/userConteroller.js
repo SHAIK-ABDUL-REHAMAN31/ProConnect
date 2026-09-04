@@ -7,6 +7,25 @@ import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
 import { v2 as cloudinary } from "cloudinary";
+import jwt from "jsonwebtoken";
+import { ENV } from "../src/config/env.js";
+
+export const findUserByToken = async (token) => {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(
+      token,
+      ENV.JWT_SECRET || "proconnect_jwt_super_secret_key_2026"
+    );
+    if (decoded && decoded.id) {
+      const user = await User.findById(decoded.id);
+      if (user) return user;
+    }
+  } catch (err) {
+    // Fallback to legacy token lookup
+  }
+  return await User.findOne({ token: token });
+};
 
 export const convertProfileToPDF = async (userProfile) => {
   console.log("convertProfiletopdf ======", userProfile);
@@ -222,7 +241,7 @@ export const updateProfilePicture = async (req, res, next) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: "Unauthorized user" });
     }
@@ -273,7 +292,7 @@ export const updateProfilePicture = async (req, res, next) => {
 export const updateUserprofile = async (req, res) => {
   try {
     const { token, ...newUserData } = req.body;
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ messge: "Unauthorized user.." });
     }
@@ -282,7 +301,7 @@ export const updateUserprofile = async (req, res) => {
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      if (existingUser || String(existingUser._id) !== String(user._id)) {
+      if (existingUser && String(existingUser._id) !== String(user._id)) {
         return res
           .status(400)
           .json({ message: "Username or email already in use." });
@@ -302,15 +321,24 @@ export const updateUserprofile = async (req, res) => {
 export const getUserAndProfile = async (req, res) => {
   try {
     const token = req.query.token;
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: " Unauthorized User" });
     }
 
-    const userProfile = await Profile.findOne({ userId: user._id }).populate(
+    let userProfile = await Profile.findOne({ userId: user._id }).populate(
       "userId",
       "name username email profilePicture",
     );
+
+    if (!userProfile) {
+      userProfile = await Profile.create({ userId: user._id });
+      userProfile = await Profile.findOne({ userId: user._id }).populate(
+        "userId",
+        "name username email profilePicture",
+      );
+    }
+
     return res.status(200).json({ profile: userProfile });
   } catch (error) {
     console.error("Get user profile error:", error);
@@ -324,16 +352,16 @@ export const updateUserData = async (req, res) => {
   try {
     const { token, ...newUserData } = req.body;
 
-    const userprofile = await User.findOne({ token: token });
+    const userprofile = await findUserByToken(token);
     if (!userprofile) {
       return res.status(401).json({ message: "Unauthorized user.." });
     }
 
-    const update_user_profile = await Profile.findOne({
+    let update_user_profile = await Profile.findOne({
       userId: userprofile._id,
     });
     if (!update_user_profile) {
-      return res.status(404).json({ message: "Profile not found." });
+      update_user_profile = await Profile.create({ userId: userprofile._id });
     }
 
     Object.assign(update_user_profile, newUserData);
@@ -393,7 +421,7 @@ export const sendConnnectionRequest = async (req, res) => {
       return res.status(400).json({ message: "Token and connectionId are required." });
     }
 
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: "User Not Found / Unauthorized." });
     }
@@ -446,7 +474,7 @@ export const getMyConnectionsRequest = async (req, res) => {
       return res.status(401).json({ message: "Token required." });
     }
 
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: "Unauthorized user." });
     }
@@ -472,7 +500,7 @@ export const whatAreMyConnections = async (req, res) => {
       return res.status(401).json({ message: "Token required." });
     }
 
-    const user = await User.findOne({ token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: "Unauthorized user." });
     }
@@ -500,7 +528,7 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(400).json({ message: "Token and requestId are required." });
     }
 
-    const user = await User.findOne({ token: token });
+    const user = await findUserByToken(token);
     if (!user) {
       return res.status(401).json({ message: "Unauthorized user." });
     }

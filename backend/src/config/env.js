@@ -13,6 +13,11 @@ export const ENV = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   CLOUD_NAME: process.env.CLOUD_NAME || "degf6z7gq",
   CLOUD_API_KEY: process.env.CLOUD_API_KEY || "895529124445831",
-  CLOUD_API_SECRET: process.env.CLOUD_API_SECRET || "vQh5F9gBkJzEa13L4y550e18_3c",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+  SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
+  SMTP_PORT: process.env.SMTP_PORT || 587,
+  SMTP_USER: process.env.SMTP_USER || process.env.EMAIL_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || process.env.EMAIL_PASS || "",
+  SMTP_FROM: process.env.SMTP_FROM || process.env.EMAIL_FROM || "ProConnect <noreply@proconnect.dev>",
 };

@@ -546,21 +546,33 @@
 }
 
 .viewProfileBtn {
-  background: transparent;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: #ffffff;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 50%;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .viewProfileBtn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #0a66c2;
+  color: #ffffff;
+  border-color: #0a66c2;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+  transform: scale(1.15);
+}
+
+.viewProfileBtn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 4px rgba(10, 102, 194, 0.2);
 }
 
 /* Empty State */
