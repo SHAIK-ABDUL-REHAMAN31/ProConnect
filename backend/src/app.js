@@ -9,6 +9,7 @@ import { securityHeaders } from "./core/middleware/security.middleware.js";
 import { sanitizeInputs } from "./core/middleware/sanitize.middleware.js";
 import { generalApiLimiter } from "./core/middleware/rateLimiter.middleware.js";
 import { ENV } from "./config/env.js";
+import mongoose from "mongoose";
 
 const app = express();
 
@@ -20,6 +21,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://linkedin-clone-frontend-psi.vercel.app",
   "https://pro-connect-eta.vercel.app",
+  "https://proconnect-1-8mwt.onrender.com",
   ENV.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -31,6 +33,7 @@ app.use(
       if (
         allowedOrigins.includes(origin) ||
         origin.endsWith(".vercel.app") ||
+        origin.endsWith(".onrender.com") ||
         origin.includes("localhost")
       ) {
         return callback(null, true);
@@ -52,21 +55,65 @@ app.use(sanitizeInputs);
 // Static uploads directory
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+// 5. Root Welcome & Health Check Routes
+const getHealthStatus = () => {
+  const dbStates = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting",
+  };
+  const readyState = mongoose.connection?.readyState ?? 0;
+  const dbStatus = dbStates[readyState] || "unknown";
+  const isHealthy = readyState === 1;
+
+  return {
+    status: isHealthy ? "healthy" : "degraded",
+    service: "ProConnect Backend API",
+    version: "2.0.0",
+    environment: ENV.NODE_ENV,
+    uptimeSeconds: Math.floor(process.uptime()),
+    database: {
+      status: dbStatus,
+      host: mongoose.connection?.host || "cluster-connected",
+    },
+    memoryUsage: {
+      rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`,
+    },
+    timestamp: new Date().toISOString(),
+  };
+};
+
+// Root landing endpoint
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "🚀 ProConnect 2.0 Backend is Live on Render!",
+    version: "2.0.0",
+    documentation: "/api/v1",
+    healthCheck: "/health",
+    ...getHealthStatus(),
+  });
+});
+
+// Health check endpoints (/health, /api/v1/health, /ping)
+app.get(["/health", "/api/v1/health"], (req, res) => {
+  const healthData = getHealthStatus();
+  const statusCode = healthData.status === "healthy" ? 200 : 200; // Return 200 with degraded note so monitors don't fail during warm-up
+  res.status(statusCode).json(healthData);
+});
+
+app.get(["/ping", "/api/v1/ping"], (req, res) => {
+  res.status(200).send("pong");
+});
+
 // Upgraded API v1 Routes (Protected with General Rate Limiter)
 app.use("/api/v1", generalApiLimiter, apiV1Router);
 
 // Legacy 1.0 Routes for full backwards compatibility
 app.use(legacyPostRoutes);
 app.use(legacyUserRoutes);
-
-// Health check
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "healthy",
-    version: "2.0.0",
-    timestamp: new Date().toISOString(),
-  });
-});
 
 // Centralized error handling
 app.use(errorHandler);

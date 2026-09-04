@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3030";
+  process.env.NEXT_PUBLIC_API_URL || "https://proconnect-1-8mwt.onrender.com";
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
