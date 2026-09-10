@@ -20,6 +20,7 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
   },
 
   createdAt: {
@@ -30,6 +31,7 @@ const UserSchema = new mongoose.Schema({
   token: {
     type: String,
     default: "",
+    select: false,
   },
 
   active: {

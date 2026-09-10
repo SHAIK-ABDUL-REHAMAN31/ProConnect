@@ -23,7 +23,7 @@ export class ApplicationController {
   async getJobApplications(req, res, next) {
     try {
       const { jobId } = req.params;
-      const applications = await applicationService.getJobApplications(jobId);
+      const applications = await applicationService.getJobApplications(jobId, req.user);
       return ApiResponse.success(res, { applications }, "Job applicants retrieved.");
     } catch (error) {
       next(error);
@@ -34,7 +34,12 @@ export class ApplicationController {
     try {
       const { id } = req.params;
       const { status, feedbackNotes } = req.body;
-      const application = await applicationService.updateApplicationStatus(id, status, feedbackNotes);
+      const application = await applicationService.updateApplicationStatus(
+        id,
+        status,
+        feedbackNotes,
+        req.user
+      );
       return ApiResponse.success(res, { application }, "Application status updated.");
     } catch (error) {
       next(error);

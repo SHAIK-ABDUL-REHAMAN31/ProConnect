@@ -1,5 +1,6 @@
 import eventRepository from "./event.repository.js";
 import { NotFoundError } from "../../core/errors/AppError.js";
+import { escapeRegex } from "../../core/utils/regex.util.js";
 
 class EventService {
   async createEvent(userId, payload) {
@@ -19,10 +20,12 @@ class EventService {
       filter.eventType = query.eventType;
     }
     if (query.search) {
+      const safeSearch = escapeRegex(query.search.trim());
+      const searchRegex = new RegExp(safeSearch, "i");
       filter.$or = [
-        { title: { $regex: new RegExp(query.search, "i") } },
-        { speakerName: { $regex: new RegExp(query.search, "i") } },
-        { tags: { $in: [new RegExp(query.search, "i")] } },
+        { title: { $regex: searchRegex } },
+        { speakerName: { $regex: searchRegex } },
+        { tags: { $in: [searchRegex] } },
       ];
     }
     return await eventRepository.findAll(filter);

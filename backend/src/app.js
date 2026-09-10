@@ -8,15 +8,19 @@ import { errorHandler } from "./core/middleware/error.middleware.js";
 import { securityHeaders } from "./core/middleware/security.middleware.js";
 import { sanitizeInputs } from "./core/middleware/sanitize.middleware.js";
 import { generalApiLimiter } from "./core/middleware/rateLimiter.middleware.js";
+import { getRedisStatus } from "./infrastructure/redis/redisClient.js";
 import { ENV } from "./config/env.js";
 import mongoose from "mongoose";
 
 const app = express();
 
+// Trust reverse proxy (Render / Load Balancer) for accurate client IP in rate limiters
+app.set("trust proxy", 1);
+
 // 1. Security HTTP Headers (Helmet Equivalent)
 app.use(securityHeaders);
 
-// 2. CORS Configuration
+// 2. CORS Configuration with strict whitelist
 const allowedOrigins = [
   "http://localhost:3000",
   "https://linkedin-clone-frontend-psi.vercel.app",
@@ -28,14 +32,9 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      // Allow requests with no origin (like curl, server-to-server, health checkers)
       if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
-        origin.endsWith(".onrender.com") ||
-        origin.includes("localhost")
-      ) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
@@ -76,6 +75,9 @@ const getHealthStatus = () => {
     database: {
       status: dbStatus,
       host: mongoose.connection?.host || "cluster-connected",
+    },
+    redis: {
+      status: getRedisStatus(),
     },
     memoryUsage: {
       rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,

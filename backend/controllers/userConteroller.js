@@ -15,7 +15,7 @@ export const findUserByToken = async (token) => {
   try {
     const decoded = jwt.verify(
       token,
-      ENV.JWT_SECRET || "proconnect_jwt_super_secret_key_2026"
+      ENV.JWT_SECRET
     );
     if (decoded && decoded.id) {
       const user = await User.findById(decoded.id);
@@ -43,12 +43,10 @@ export const convertProfileToPDF = async (userProfile) => {
   doc.pipe(stream);
 
   try {
-    let profileImage = userProfile.userId.profilePicture || "default.jpg";
-    if (profileImage.startsWith("uploads/")) {
-      profileImage = profileImage.replace("uploads/", "");
-    }
-
-    const profileImagePath = path.resolve(outputDir, profileImage);
+    let rawProfileImage = userProfile.userId?.profilePicture || "default.jpg";
+    // Sanitize image path to prevent directory traversal
+    const safeImageName = path.basename(rawProfileImage.replace(/^uploads[\\/]/, ""));
+    const profileImagePath = path.join(outputDir, safeImageName);
     console.log(" Checking profile image path:", profileImagePath);
 
     if (fs.existsSync(profileImagePath)) {
@@ -291,24 +289,26 @@ export const updateProfilePicture = async (req, res, next) => {
 
 export const updateUserprofile = async (req, res) => {
   try {
-    const { token, ...newUserData } = req.body;
+    const { token, name, headline, bio } = req.body;
     const user = await findUserByToken(token);
     if (!user) {
-      return res.status(401).json({ messge: "Unauthorized user.." });
+      return res.status(401).json({ message: "Unauthorized user." });
     }
 
-    const { username, email } = newUserData;
+    if (name && typeof name === "string") user.name = name.trim();
+    if (headline !== undefined) user.headline = String(headline).trim();
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      if (existingUser && String(existingUser._id) !== String(user._id)) {
-        return res
-          .status(400)
-          .json({ message: "Username or email already in use." });
-      }
-    }
-    Object.assign(user, newUserData);
     await user.save();
+
+    // If bio was updated, sync to profile as well
+    if (bio !== undefined) {
+      await Profile.findOneAndUpdate(
+        { userId: user._id },
+        { $set: { bio: String(bio).trim() } },
+        { upsert: true }
+      );
+    }
+
     return res.status(200).json({ message: "Profile updated successfully." });
   } catch (error) {
     console.error("Profile update error:", error);
@@ -538,6 +538,13 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(404).json({ message: "Connection Request Not Found." });
     }
 
+    // STRICT IDOR DEFENSE: Only the target recipient of the connection request can accept or decline it
+    if (connectionRequest.connectionId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        message: "You are not authorized to respond to this connection request.",
+      });
+    }
+
     const isAccepted = action_type === "accept" || action_type === true;
     connectionRequest.status_accepted = isAccepted;
     await connectionRequest.save();
@@ -560,31 +567,32 @@ export const getuserProfileBasedOnUsername = async (req, res) => {
     const incomingRaw = decodeURIComponent(req.query.username || "");
     const incoming = incomingRaw.trim().toLowerCase();
 
-    const allUsers = await User.find({}, "username _id");
-    const matchedUser = allUsers.find(
-      (u) =>
-        typeof u.username === "string" &&
-        u.username.trim().toLowerCase() === incoming,
-    );
+    if (!incoming) {
+      return res.status(400).json({ message: "Username parameter is required." });
+    }
+
+    // Direct indexed query instead of loading entire collection into memory
+    const escaped = incoming.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const matchedUser = await User.findOne({
+      username: { $regex: new RegExp(`^${escaped}$`, "i") },
+    }).select("_id username");
 
     if (!matchedUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Explicitly populate ONLY safe fields, never exposing password or session token
     const userProfile = await Profile.findOne({ userId: matchedUser._id })
-      .populate("userId")
+      .populate("userId", "name username email profilePicture headline")
       .exec();
 
     if (!userProfile) {
-      console.log("Profile not found for user:", matchedUser.username);
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    // Success logging
-    console.log("From ServerSide:", matchedUser.username);
     res.status(200).json({ userProfile });
   } catch (error) {
-    console.error(" Server error:", error);
+    console.error("Server error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

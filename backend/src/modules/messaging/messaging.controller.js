@@ -24,7 +24,7 @@ export class MessagingController {
   async getMessages(req, res, next) {
     try {
       const { conversationId } = req.params;
-      const messages = await messagingService.getMessages(conversationId);
+      const messages = await messagingService.getMessages(req.user._id, conversationId);
       return ApiResponse.success(res, { messages }, "Messages retrieved.");
     } catch (error) {
       next(error);

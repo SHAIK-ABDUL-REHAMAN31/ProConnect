@@ -1,5 +1,6 @@
 import { jobRepository } from "./job.repository.js";
 import { BadRequestError, NotFoundError } from "../../core/errors/AppError.js";
+import { escapeRegex } from "../../core/utils/regex.util.js";
 
 export class JobService {
   async createJob(recruiterId, jobData) {
@@ -19,10 +20,11 @@ export class JobService {
     const filter = { status: "OPEN" };
 
     if (query.search) {
+      const safeSearch = escapeRegex(query.search.trim());
       filter.$or = [
-        { title: { $regex: query.search, $options: "i" } },
-        { companyName: { $regex: query.search, $options: "i" } },
-        { description: { $regex: query.search, $options: "i" } },
+        { title: { $regex: safeSearch, $options: "i" } },
+        { companyName: { $regex: safeSearch, $options: "i" } },
+        { description: { $regex: safeSearch, $options: "i" } },
       ];
     }
 

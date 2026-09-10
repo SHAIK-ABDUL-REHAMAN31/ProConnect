@@ -55,6 +55,15 @@ class EmailService {
       ENV.SMTP_FROM ||
       (sender ? `"ProConnect" <${sender}>` : `"ProConnect Security" <noreply@proconnect.dev>`);
 
+    // Prevent HTML & Email Template Injection
+    const safeName = String(name || "Professional")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+    const safeOtp = String(otpCode).replace(/[^0-9]/g, "");
+
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
@@ -159,12 +168,12 @@ class EmailService {
       <p>Next-Generation Professional Social & Career Platform</p>
     </div>
     <div class="content">
-      <div class="greeting">Hello ${name},</div>
+      <div class="greeting">Hello ${safeName},</div>
       <div class="text">
         Thank you for joining ProConnect. Please use the following 6-digit verification code to confirm your email address and activate your account.
       </div>
       
-      <div class="otp-box">${otpCode}</div>
+      <div class="otp-box">${safeOtp}</div>
       
       <div class="expiry">⏱️ This verification code is valid for <strong>10 minutes</strong>.</div>
       

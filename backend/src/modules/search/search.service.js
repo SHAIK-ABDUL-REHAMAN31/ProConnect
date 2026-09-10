@@ -1,6 +1,7 @@
 import User from "../users/user.model.js";
 import Post from "../posts/post.model.js";
 import Job from "../jobs/job.model.js";
+import { escapeRegex } from "../../core/utils/regex.util.js";
 
 export class SearchService {
   async searchAll(keyword) {
@@ -8,7 +9,8 @@ export class SearchService {
       return { people: [], posts: [], jobs: [] };
     }
 
-    const regex = new RegExp(keyword.trim(), "i");
+    const safeKeyword = escapeRegex(keyword.trim());
+    const regex = new RegExp(safeKeyword, "i");
 
     const [people, posts, jobs] = await Promise.all([
       User.find({

@@ -48,12 +48,15 @@ class SettingsService {
   }
 
   async updatePassword(userId, currentPassword, newPassword) {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("+password");
     if (!user) {
       throw new NotFoundError("User not found");
     }
 
     if (user.password) {
+      if (!currentPassword) {
+        throw new BadRequestError("Current password is required to change password");
+      }
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
         throw new BadRequestError("Current password is incorrect");

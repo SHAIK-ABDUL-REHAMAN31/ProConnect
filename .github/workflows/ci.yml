@@ -1,0 +1,136 @@
+name: ProConnect CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===================================================
+  # Job 1: Backend CI (Syntax, Security & Sanity Tests)
+  # ===================================================
+  backend-check:
+    name: Backend CI & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Security Vulnerability Audit
+        working-directory: ./backend
+        run: npm audit --audit-level=critical
+        continue-on-error: true
+
+      - name: Validate Backend Modules & Syntax
+        working-directory: ./backend
+        run: |
+          node -e "
+            import('./src/app.js')
+              .then(() => console.log('✓ Backend app module loaded cleanly'))
+              .catch(err => { console.error('✗ App import error:', err); process.exit(1); });
+          "
+
+  # ===================================================
+  # Job 2: Frontend CI (Linting & Standalone Build)
+  # ===================================================
+  frontend-check:
+    name: Frontend CI & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Next.js Build Artifacts
+        uses: actions/cache@v4
+        with:
+          path: frontend/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/src/**.[jt]s', 'frontend/src/**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Validate Code Standards (ESLint)
+        working-directory: ./frontend
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Verify Next.js Standalone Build
+        working-directory: ./frontend
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NODE_ENV: production
+          NEXT_PUBLIC_API_URL: http://localhost:3030
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:3030
+        run: npm run build
+
+  # ===================================================
+  # Job 3: Docker & Compose Validation
+  # ===================================================
+  docker-validation:
+    name: Docker Builds & Compose Validation
+    needs: [backend-check, frontend-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose Configuration
+        run: docker compose config
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: proconnect-backend:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend Standalone Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: proconnect-frontend:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:3030
+            NEXT_PUBLIC_SOCKET_URL=http://localhost:3030

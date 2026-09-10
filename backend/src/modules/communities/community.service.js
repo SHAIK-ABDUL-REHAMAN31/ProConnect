@@ -1,6 +1,8 @@
 import { communityRepository } from "./community.repository.js";
 import { BadRequestError, NotFoundError, ForbiddenError } from "../../core/errors/AppError.js";
 import { socketGateway } from "../../infrastructure/websocket/socketGateway.js";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export class CommunityService {
   async createCommunity(creatorId, data, file = null) {
@@ -56,11 +58,13 @@ export class CommunityService {
         const User = (await import("../users/user.model.js")).default;
         let adminUser = await User.findOne();
         if (!adminUser) {
+          const hashedPassword = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
           adminUser = await User.create({
             name: "ProConnect Admin",
             username: "admin",
             email: "admin@proconnect.dev",
-            password: "Password123!",
+            password: hashedPassword,
+            role: "ADMIN",
           });
         }
         const adminId = adminUser._id;

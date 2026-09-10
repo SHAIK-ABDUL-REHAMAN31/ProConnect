@@ -15,6 +15,9 @@ export const authenticate = async (req, res, next) => {
     } else if (req.body && req.body.token) {
       token = req.body.token;
     } else if (req.query && req.query.token) {
+      // SECURITY NOTE: Query string tokens leak into server logs, browser history, and Referer headers.
+      // This path is retained for legacy backward compatibility only and should be migrated to Authorization header.
+      console.warn(`[AUTH DEPRECATION] Token sent via query string on ${req.method} ${req.path}. Migrate to Authorization header.`);
       token = req.query.token;
     }
 

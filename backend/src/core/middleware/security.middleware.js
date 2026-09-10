@@ -23,6 +23,22 @@ export const securityHeaders = (req, res, next) => {
   // Permissions Policy
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 
+  // Content-Security-Policy: Defense-in-depth against XSS & data injection attacks
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com",
+      "connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ")
+  );
+
   // Hide Express server fingerprinting
   res.removeHeader("X-Powered-By");
 

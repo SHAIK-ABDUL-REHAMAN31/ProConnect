@@ -6,6 +6,7 @@ import { profileRepository } from "../profiles/profile.repository.js";
 import EmailVerification from "./emailVerification.model.js";
 import { verifyEmailRealWorldDns } from "../../infrastructure/email/dnsValidator.js";
 import emailService from "../../infrastructure/email/emailService.js";
+import { enqueueEmail } from "../../infrastructure/queues/emailQueue.js";
 import { BadRequestError, UnauthorizedError } from "../../core/errors/AppError.js";
 import { ENV } from "../../config/env.js";
 import cloudinary from "../../config/cloudinary.js";
@@ -124,13 +125,18 @@ export class AuthService {
       attempts: 0,
     });
 
-    // 5. Send verification email via Nodemailer
-    const emailResult = await emailService.sendVerificationOtpEmail(cleanEmail, name, otp);
+    // 5. Asynchronously enqueue verification email via Redis Queue
+    const queueResult = await enqueueEmail({
+      type: "verification_otp",
+      to: cleanEmail,
+      name,
+      otp,
+    });
 
     return {
       email: cleanEmail,
       message: "Verification code sent to your email address.",
-      deliveredVia: emailResult.deliveredVia,
+      status: queueResult.status || "queued",
       domain: dnsResult.domain,
     };
   }
@@ -193,7 +199,7 @@ export class AuthService {
   /**
    * User registration with real-world DNS domain checking and optional OTP verification state.
    */
-  async register({ name, email, username, password, role = "USER" }) {
+  async register({ name, email, username, password }) {
     if (!name || !email || !username || !password) {
       throw new BadRequestError("All registration fields are required.");
     }
@@ -230,12 +236,13 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
     const legacyToken = crypto.randomBytes(32).toString("hex");
 
+    // Strictly enforce role to USER on registration to prevent privilege escalation
     const user = await userRepository.create({
       name: name.trim(),
       email: cleanEmail,
       username: cleanUsername,
       password: hashedPassword,
-      role,
+      role: "USER",
       token: legacyToken,
       authProvider: "local",
       isEmailVerified,
@@ -309,44 +316,41 @@ export class AuthService {
 
   /**
    * Google OAuth 2.0 Sign-In and Auto-Provisioning.
-   * Supports Google ID Token credential from Google Identity Services.
+   * Strictly validates Google ID Token credentials against Google tokeninfo.
    */
-  async googleAuth({ credential, userInfo, token } = {}) {
+  async googleAuth({ credential } = {}) {
     let googleUser = null;
 
-    // 1. Verify Google ID Token via Google's tokeninfo API
-    if (credential) {
-      try {
-        const response = await fetch(
-          `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error_description || "Google token verification failed.");
-        }
-        const data = await response.json();
-        googleUser = {
-          googleId: data.sub,
-          email: data.email?.toLowerCase().trim(),
-          name: data.name || data.given_name || "Google Professional",
-          picture: data.picture || "default.jpg",
-          emailVerified: data.email_verified === "true" || data.email_verified === true,
-        };
-      } catch (err) {
-        console.error("[GoogleAuth] Token verification failed:", err.message);
-        throw new UnauthorizedError(`Google authentication failed: ${err.message}`);
+    if (!credential) {
+      throw new BadRequestError("Valid Google ID token credential is required.");
+    }
+
+    // Verify Google ID Token via Google's tokeninfo API
+    try {
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error_description || "Google token verification failed.");
       }
-    } else if (userInfo && userInfo.email) {
-      // Direct userInfo payload from client
+      const data = await response.json();
+
+      // Optional: If GOOGLE_CLIENT_ID is configured, enforce audience check
+      if (ENV.GOOGLE_CLIENT_ID && data.aud && data.aud !== ENV.GOOGLE_CLIENT_ID) {
+        throw new Error("Google token audience mismatch.");
+      }
+
       googleUser = {
-        googleId: userInfo.id || userInfo.sub || userInfo.googleId,
-        email: userInfo.email.toLowerCase().trim(),
-        name: userInfo.name || `${userInfo.given_name || ""} ${userInfo.family_name || ""}`.trim() || "Google Professional",
-        picture: userInfo.picture || userInfo.avatar || "default.jpg",
-        emailVerified: true,
+        googleId: data.sub,
+        email: data.email?.toLowerCase().trim(),
+        name: data.name || data.given_name || "Google Professional",
+        picture: data.picture || "default.jpg",
+        emailVerified: data.email_verified === "true" || data.email_verified === true,
       };
-    } else {
-      throw new BadRequestError("Google credential or user profile payload is required.");
+    } catch (err) {
+      console.error("[GoogleAuth] Token verification failed:", err.message);
+      throw new UnauthorizedError(`Google authentication failed: ${err.message}`);
     }
 
     if (!googleUser || !googleUser.email) {

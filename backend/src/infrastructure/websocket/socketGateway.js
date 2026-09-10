@@ -11,19 +11,22 @@ class SocketGateway {
   }
 
   initialize(httpServer) {
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "https://linkedin-clone-frontend-psi.vercel.app",
+      "https://pro-connect-eta.vercel.app",
+      "https://proconnect-1-8mwt.onrender.com",
+      ENV.FRONTEND_URL,
+    ].filter(Boolean);
+
     this.io = new SocketIOServer(httpServer, {
       cors: {
         origin: (origin, callback) => {
           if (!origin) return callback(null, true);
-          if (
-            origin.includes("localhost") ||
-            origin.endsWith(".vercel.app") ||
-            origin === ENV.FRONTEND_URL ||
-            origin === "https://pro-connect-eta.vercel.app"
-          ) {
+          if (allowedOrigins.includes(origin)) {
             return callback(null, true);
           }
-          return callback(null, true); // Allow connection
+          return callback(new Error("Origin not allowed by WebSocket CORS"));
         },
         methods: ["GET", "POST"],
         credentials: true,
@@ -68,10 +71,29 @@ class SocketGateway {
         this.io.emit("user_status", { userId, status: "ONLINE" });
       }
 
-      // Join a conversation room
-      socket.on("join_conversation", (conversationId) => {
-        socket.join(`conversation:${conversationId}`);
-        console.log(`[WebSocket] Socket ${socket.id} joined conversation: ${conversationId}`);
+      // Join a conversation room with strict membership check
+      socket.on("join_conversation", async (conversationId) => {
+        if (!socket.userId) {
+          socket.emit("error", { message: "Authentication required to join conversation rooms." });
+          return;
+        }
+
+        try {
+          const Conversation = (await import("../../modules/messaging/conversation.model.js")).default;
+          const conversation = await Conversation.findById(conversationId);
+          if (
+            !conversation ||
+            !conversation.participants.some((p) => p.toString() === socket.userId.toString())
+          ) {
+            socket.emit("error", { message: "Not authorized to join this conversation." });
+            return;
+          }
+
+          socket.join(`conversation:${conversationId}`);
+          console.log(`[WebSocket] Authorized socket ${socket.id} (User ${socket.userId}) joined conversation: ${conversationId}`);
+        } catch (err) {
+          console.error("[WebSocket] Join conversation error:", err.message);
+        }
       });
 
       // Join a community / group room
@@ -85,20 +107,22 @@ class SocketGateway {
         console.log(`[WebSocket] Socket ${socket.id} left community: ${communityId}`);
       });
 
-      // Typing indicators
-      socket.on("typing_start", ({ conversationId, senderId, senderName }) => {
+      // Secure typing indicators tied to authenticated session
+      socket.on("typing_start", async ({ conversationId, senderName }) => {
+        if (!socket.userId) return;
         socket.to(`conversation:${conversationId}`).emit("user_typing", {
           conversationId,
-          userId: senderId,
-          userName: senderName,
+          userId: socket.userId,
+          userName: senderName || "Someone",
           isTyping: true,
         });
       });
 
-      socket.on("typing_stop", ({ conversationId, senderId }) => {
+      socket.on("typing_stop", ({ conversationId }) => {
+        if (!socket.userId) return;
         socket.to(`conversation:${conversationId}`).emit("user_typing", {
           conversationId,
-          userId: senderId,
+          userId: socket.userId,
           isTyping: false,
         });
       });

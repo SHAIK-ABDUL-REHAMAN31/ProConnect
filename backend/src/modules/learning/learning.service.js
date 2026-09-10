@@ -1,5 +1,6 @@
 import learningRepository from "./learning.repository.js";
 import { NotFoundError } from "../../core/errors/AppError.js";
+import { escapeRegex } from "../../core/utils/regex.util.js";
 
 class LearningService {
   async getCourses(category, level, search) {
@@ -7,10 +8,12 @@ class LearningService {
     if (category && category !== "All") filter.category = category;
     if (level && level !== "All") filter.level = level;
     if (search) {
+      const safeSearch = escapeRegex(search.trim());
+      const searchRegex = new RegExp(safeSearch, "i");
       filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { skillsCovered: { $in: [new RegExp(search, "i")] } },
+        { title: { $regex: safeSearch, $options: "i" } },
+        { description: { $regex: safeSearch, $options: "i" } },
+        { skillsCovered: { $in: [searchRegex] } },
       ];
     }
     return await learningRepository.findCourses(filter);
