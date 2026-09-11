@@ -12,6 +12,9 @@ export const loginUser = createAsyncThunk(
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
+        if (response.data.refreshToken) {
+          localStorage.setItem("refreshToken", response.data.refreshToken);
+        }
         localStorage.setItem("user", JSON.stringify(response.data.user)); // store user
       }
 
@@ -32,10 +35,14 @@ export const googleLoginUser = createAsyncThunk(
       const response = await clientServer.post("/api/v1/auth/google", googleData);
       const data = response.data?.data || response.data;
       const token = data?.token || data?.accessToken;
+      const refreshToken = data?.refreshToken;
       const user = data?.user;
 
       if (token) {
         localStorage.setItem("token", token);
+        if (refreshToken) {
+          localStorage.setItem("refreshToken", refreshToken);
+        }
         if (user) {
           localStorage.setItem("user", JSON.stringify(user));
         }
@@ -71,10 +78,14 @@ export const registerUser = createAsyncThunk(
       });
       const data = response.data?.data || response.data;
       const token = data?.token || data?.accessToken;
+      const refreshToken = data?.refreshToken;
       const userData = data?.user;
 
       if (token) {
         localStorage.setItem("token", token);
+        if (refreshToken) {
+          localStorage.setItem("refreshToken", refreshToken);
+        }
         if (userData) {
           localStorage.setItem("user", JSON.stringify(userData));
         }

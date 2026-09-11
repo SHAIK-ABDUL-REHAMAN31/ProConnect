@@ -9,9 +9,13 @@ import { securityHeaders } from "./core/middleware/security.middleware.js";
 import { sanitizeInputs } from "./core/middleware/sanitize.middleware.js";
 import { generalApiLimiter } from "./core/middleware/rateLimiter.middleware.js";
 import { getRedisStatus } from "./infrastructure/redis/redisClient.js";
+import { httpLogger } from "./infrastructure/logger/logger.js";
 import { ENV } from "./config/env.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
 import mongoose from "mongoose";
 
+// Express app configuration
 const app = express();
 
 // Trust reverse proxy (Render / Load Balancer) for accurate client IP in rate limiters
@@ -20,7 +24,10 @@ app.set("trust proxy", 1);
 // 1. Security HTTP Headers (Helmet Equivalent)
 app.use(securityHeaders);
 
-// 2. CORS Configuration with strict whitelist
+// 2. Structured HTTP Request Logger (Winston)
+app.use(httpLogger);
+
+// 3. CORS Configuration with strict whitelist
 const allowedOrigins = [
   "http://localhost:3000",
   "https://linkedin-clone-frontend-psi.vercel.app",
@@ -44,11 +51,11 @@ app.use(
   })
 );
 
-// 3. Payload size limiting & body parsers
+// 4. Payload size limiting & body parsers
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-// 4. NoSQL Injection & XSS Input Sanitizer
+// 5. NoSQL Injection & XSS Input Sanitizer
 app.use(sanitizeInputs);
 
 // Static uploads directory
@@ -87,13 +94,28 @@ const getHealthStatus = () => {
   };
 };
 
+// Swagger Interactive OpenAPI 3.0 Documentation
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "ProConnect API Documentation",
+    customCss: ".swagger-ui .topbar { display: none }",
+  })
+);
+
+app.get("/api/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
 // Root landing endpoint
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
     message: "🚀 ProConnect 2.0 Backend is Live on Render!",
     version: "2.0.0",
-    documentation: "/api/v1",
+    documentation: "/api/docs",
     healthCheck: "/health",
     ...getHealthStatus(),
   });

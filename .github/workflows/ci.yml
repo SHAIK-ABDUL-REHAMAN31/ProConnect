@@ -52,6 +52,10 @@ jobs:
               .catch(err => { console.error('✗ App import error:', err); process.exit(1); });
           "
 
+      - name: Run Automated Test Suites
+        working-directory: ./backend
+        run: npm test
+
   # ===================================================
   # Job 2: Frontend CI (Linting & Standalone Build)
   # ===================================================

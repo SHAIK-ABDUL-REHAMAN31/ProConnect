@@ -4,6 +4,8 @@ import crypto from "crypto";
 import { userRepository } from "../users/user.repository.js";
 import { profileRepository } from "../profiles/profile.repository.js";
 import EmailVerification from "./emailVerification.model.js";
+import RefreshToken from "./refreshToken.model.js";
+import logger from "../../infrastructure/logger/logger.js";
 import { verifyEmailRealWorldDns } from "../../infrastructure/email/dnsValidator.js";
 import emailService from "../../infrastructure/email/emailService.js";
 import { enqueueEmail } from "../../infrastructure/queues/emailQueue.js";
@@ -199,7 +201,7 @@ export class AuthService {
   /**
    * User registration with real-world DNS domain checking and optional OTP verification state.
    */
-  async register({ name, email, username, password }) {
+  async register({ name, email, username, password }, { userAgent = "", ip = "" } = {}) {
     if (!name || !email || !username || !password) {
       throw new BadRequestError("All registration fields are required.");
     }
@@ -253,6 +255,16 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
+    // Persist refresh token with new family
+    const family = crypto.randomUUID();
+    await this.storeRefreshToken({
+      refreshToken: tokens.refreshToken,
+      userId: user._id,
+      family,
+      userAgent,
+      ip,
+    });
+
     return {
       user: {
         id: user._id,
@@ -271,7 +283,7 @@ export class AuthService {
   /**
    * Traditional email/username and password login.
    */
-  async login({ email, username, password }) {
+  async login({ email, username, password }, { userAgent = "", ip = "" } = {}) {
     const identifier = (email || username || "").trim();
     if (!identifier || !password) {
       throw new BadRequestError("Email or username and password are required.");
@@ -297,6 +309,16 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
+    // Persist refresh token with new family
+    const family = crypto.randomUUID();
+    await this.storeRefreshToken({
+      refreshToken: tokens.refreshToken,
+      userId: user._id,
+      family,
+      userAgent,
+      ip,
+    });
+
     return {
       user: {
         id: user._id,
@@ -318,7 +340,7 @@ export class AuthService {
    * Google OAuth 2.0 Sign-In and Auto-Provisioning.
    * Strictly validates Google ID Token credentials against Google tokeninfo.
    */
-  async googleAuth({ credential } = {}) {
+  async googleAuth({ credential } = {}, { userAgent = "", ip = "" } = {}) {
     let googleUser = null;
 
     if (!credential) {
@@ -349,7 +371,7 @@ export class AuthService {
         emailVerified: data.email_verified === "true" || data.email_verified === true,
       };
     } catch (err) {
-      console.error("[GoogleAuth] Token verification failed:", err.message);
+      logger.error("Google token verification failed", { error: err.message });
       throw new UnauthorizedError(`Google authentication failed: ${err.message}`);
     }
 
@@ -411,6 +433,16 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
+    // Persist refresh token with new family
+    const family = crypto.randomUUID();
+    await this.storeRefreshToken({
+      refreshToken: tokens.refreshToken,
+      userId: user._id,
+      family,
+      userAgent,
+      ip,
+    });
+
     return {
       user: {
         id: user._id,
@@ -467,6 +499,136 @@ export class AuthService {
         profilePicture: newUrl,
       },
     };
+  }
+
+  // ───────────────────────────────────────────────────────────
+  // Refresh Token Management & Token Family Rotation
+  // ───────────────────────────────────────────────────────────
+
+  hashToken(token) {
+    return crypto.createHash("sha256").update(token).digest("hex");
+  }
+
+  async storeRefreshToken({ refreshToken, userId, family, userAgent = "", ip = "" }) {
+    try {
+      const decoded = jwt.decode(refreshToken);
+      const expiresAt = decoded?.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      const tokenHash = this.hashToken(refreshToken);
+
+      await RefreshToken.create({
+        tokenHash,
+        userId,
+        family,
+        userAgent,
+        ip,
+        expiresAt,
+      });
+    } catch (err) {
+      logger.error("Failed to store refresh token in database", { error: err.message });
+    }
+  }
+
+  /**
+   * Refresh Token Rotation with Token Family Reuse Detection.
+   * If an already-used or revoked refresh token is presented, the entire family
+   * is invalidated immediately to protect against token replay/theft.
+   */
+  async refreshTokens(providedToken, { userAgent = "", ip = "" } = {}) {
+    if (!providedToken) {
+      throw new BadRequestError("Refresh token is required.");
+    }
+
+    // 1. Verify token signature and expiration
+    try {
+      jwt.verify(providedToken, ENV.JWT_REFRESH_SECRET);
+    } catch {
+      throw new UnauthorizedError("Invalid or expired refresh token.");
+    }
+
+    // 2. Look up hashed token in DB
+    const tokenHash = this.hashToken(providedToken);
+    const existingToken = await RefreshToken.findOne({ tokenHash });
+
+    if (!existingToken) {
+      throw new UnauthorizedError("Refresh token not found or already purged.");
+    }
+
+    // 3. REUSE DETECTION: If token was already used or revoked, revoke all tokens in family
+    if (existingToken.isUsed || existingToken.isRevoked) {
+      await RefreshToken.updateMany(
+        { family: existingToken.family },
+        { isRevoked: true }
+      );
+
+      logger.warn("Security Alert: Refresh token reuse detected! Family revoked.", {
+        userId: existingToken.userId,
+        family: existingToken.family,
+        ip,
+      });
+
+      throw new UnauthorizedError(
+        "Security violation: Refresh token reuse detected. All active sessions have been terminated. Please log in again."
+      );
+    }
+
+    // 4. Mark current token as used
+    existingToken.isUsed = true;
+    await existingToken.save();
+
+    // 5. Fetch user to ensure account is still active
+    const user = await userRepository.findById(existingToken.userId);
+    if (!user) {
+      throw new UnauthorizedError("Associated user account no longer exists.");
+    }
+
+    // 6. Issue a new token pair
+    const tokens = this.generateTokens(user);
+
+    // 7. Store new refresh token in the SAME family
+    await this.storeRefreshToken({
+      refreshToken: tokens.refreshToken,
+      userId: user._id,
+      family: existingToken.family,
+      userAgent,
+      ip,
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      token: tokens.accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profilePicture: user.profilePicture,
+      },
+    };
+  }
+
+  /**
+   * Revoke session on logout.
+   */
+  async logout({ refreshToken, userId }) {
+    if (refreshToken) {
+      const tokenHash = this.hashToken(refreshToken);
+      const tokenDoc = await RefreshToken.findOne({ tokenHash });
+      if (tokenDoc) {
+        await RefreshToken.updateMany(
+          { family: tokenDoc.family },
+          { isRevoked: true }
+        );
+      }
+    } else if (userId) {
+      await RefreshToken.updateMany({ userId }, { isRevoked: true });
+    }
+
+    return { success: true, message: "Logged out successfully." };
   }
 }
 

@@ -15,8 +15,12 @@ export class PostController {
     try {
       const limit = parseInt(req.query.limit) || 50;
       const skip = parseInt(req.query.skip) || 0;
-      const posts = await postService.getAllPosts(limit, skip);
-      return ApiResponse.success(res, "Posts retrieved successfully.", { posts });
+      const result = await postService.getAllPosts(limit, skip);
+      const posts = result && result.posts !== undefined ? result.posts : result;
+      const fromCache = Boolean(result && result.fromCache);
+
+      res.setHeader("X-Cache", fromCache ? "HIT" : "MISS");
+      return ApiResponse.success(res, "Posts retrieved successfully.", { posts, fromCache });
     } catch (error) {
       next(error);
     }

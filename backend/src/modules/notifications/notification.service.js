@@ -1,6 +1,7 @@
 import Notification from "./notification.model.js";
 import { notificationRepository } from "./notification.repository.js";
-import { socketGateway } from "../../infrastructure/websocket/socketGateway.js";
+import { notificationDispatcher } from "../../infrastructure/notifications/notificationDispatcher.js";
+import User from "../users/user.model.js";
 
 export class NotificationService {
   async getNotifications(userId, limit = 50) {
@@ -21,8 +22,8 @@ export class NotificationService {
       "name username profilePicture"
     );
 
-    // Live push via WebSocket
-    socketGateway.emitToUser(recipientId, "new_notification", populated);
+    // Multi-channel dispatch (Live WebSocket + Async Email)
+    await notificationDispatcher.dispatch(notification, populated);
 
     return populated;
   }
@@ -33,6 +34,36 @@ export class NotificationService {
 
   async markAllAsRead(userId) {
     return notificationRepository.markAllAsRead(userId);
+  }
+
+  async getPreferences(userId) {
+    const user = await User.findById(userId).select("notificationPreferences");
+    return (
+      user?.notificationPreferences || {
+        emailNotifications: true,
+        connectionRequests: true,
+        messages: true,
+        postInteractions: true,
+        jobAlerts: true,
+        emailDigest: "daily",
+      }
+    );
+  }
+
+  async updatePreferences(userId, preferences) {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    user.notificationPreferences = {
+      ...(user.notificationPreferences || {}),
+      ...preferences,
+    };
+    await user.save();
+    return user.notificationPreferences;
+  }
+
+  async triggerDigest(frequency = "daily") {
+    return notificationDispatcher.processDigests(frequency);
   }
 }
 

@@ -1,6 +1,7 @@
 import { Server as SocketIOServer } from "socket.io";
 import jwt from "jsonwebtoken";
 import { ENV } from "../../config/env.js";
+import logger from "../logger/logger.js";
 
 import User from "../../modules/users/user.model.js";
 
@@ -8,6 +9,7 @@ class SocketGateway {
   constructor() {
     this.io = null;
     this.onlineUsers = new Map(); // userId -> Set of socketIds
+    this.codeRooms = new Map(); // roomId -> Map(socketId -> userInfo)
   }
 
   initialize(httpServer) {
@@ -58,7 +60,7 @@ class SocketGateway {
 
     this.io.on("connection", (socket) => {
       const userId = socket.userId;
-      console.log(`[WebSocket] Client connected: ${socket.id} (User: ${userId || "Anonymous"})`);
+      logger.info(`WebSocket client connected`, { socketId: socket.id, userId: userId || "Anonymous" });
 
       if (userId) {
         if (!this.onlineUsers.has(userId)) {
@@ -90,21 +92,21 @@ class SocketGateway {
           }
 
           socket.join(`conversation:${conversationId}`);
-          console.log(`[WebSocket] Authorized socket ${socket.id} (User ${socket.userId}) joined conversation: ${conversationId}`);
+          logger.info(`WebSocket authorized join conversation`, { socketId: socket.id, userId: socket.userId, conversationId });
         } catch (err) {
-          console.error("[WebSocket] Join conversation error:", err.message);
+          logger.error("WebSocket join conversation error", { error: err.message });
         }
       });
 
       // Join a community / group room
       socket.on("join_community", (communityId) => {
         socket.join(`community:${communityId}`);
-        console.log(`[WebSocket] Socket ${socket.id} joined community: ${communityId}`);
+        logger.debug(`WebSocket joined community`, { socketId: socket.id, communityId });
       });
 
       socket.on("leave_community", (communityId) => {
         socket.leave(`community:${communityId}`);
-        console.log(`[WebSocket] Socket ${socket.id} left community: ${communityId}`);
+        logger.debug(`WebSocket left community`, { socketId: socket.id, communityId });
       });
 
       // Secure typing indicators tied to authenticated session
@@ -127,9 +129,122 @@ class SocketGateway {
         });
       });
 
+      // ─── Real-Time Code Collab Events ───
+      socket.on("join_code_room", ({ roomId, user }) => {
+        if (!roomId) return;
+        socket.join(`code_room:${roomId}`);
+
+        if (!this.codeRooms.has(roomId)) {
+          this.codeRooms.set(roomId, {
+            users: new Map(),
+            code: null,
+            language: null,
+            problemId: null,
+          });
+        }
+        const roomData = this.codeRooms.get(roomId);
+        const role = roomData.users.size === 0 ? "Host" : "Candidate";
+        const peerName = user?.name || (role === "Host" ? "Interviewer" : `Peer #${roomData.users.size + 1}`);
+
+        roomData.users.set(socket.id, {
+          socketId: socket.id,
+          userId: socket.userId || null,
+          name: peerName,
+          avatar: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(peerName)}&background=0a66c2&color=fff`,
+          role,
+          joinedAt: new Date().toISOString(),
+        });
+
+        const participants = Array.from(roomData.users.values());
+        this.io.to(`code_room:${roomId}`).emit("code_room_users", {
+          roomId,
+          participants,
+        });
+
+        // Send existing code buffer to newly joined peer
+        if (roomData.code) {
+          socket.emit("code_init_state", {
+            roomId,
+            code: roomData.code,
+            language: roomData.language,
+            problemId: roomData.problemId,
+          });
+        }
+
+        logger.info(`WebSocket joined code room`, { socketId: socket.id, peerName, roomId, totalParticipants: participants.length });
+      });
+
+      socket.on("code_change", ({ roomId, code, language, problemId, cursor }) => {
+        if (!roomId) return;
+        if (this.codeRooms.has(roomId)) {
+          const roomData = this.codeRooms.get(roomId);
+          roomData.code = code;
+          if (language) roomData.language = language;
+          if (problemId) roomData.problemId = problemId;
+        }
+
+        socket.to(`code_room:${roomId}`).emit("code_updated", {
+          roomId,
+          code,
+          language,
+          problemId,
+          cursor,
+          senderId: socket.id,
+        });
+      });
+
+      socket.on("code_run", ({ roomId, language }) => {
+        if (!roomId) return;
+        socket.to(`code_room:${roomId}`).emit("code_executing", {
+          roomId,
+          language,
+          senderId: socket.id,
+        });
+      });
+
+      socket.on("code_result", ({ roomId, results, allPassed, language, duration }) => {
+        if (!roomId) return;
+        socket.to(`code_room:${roomId}`).emit("code_result_received", {
+          roomId,
+          results,
+          allPassed,
+          language,
+          duration,
+          senderId: socket.id,
+        });
+      });
+
+      socket.on("code_chat_message", ({ roomId, text, user }) => {
+        if (!roomId || !text) return;
+        const msg = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          text: String(text).slice(0, 500),
+          senderName: user?.name || "Peer",
+          senderAvatar: user?.avatar || "",
+          senderId: socket.id,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        this.io.to(`code_room:${roomId}`).emit("code_chat_received", msg);
+      });
+
+      socket.on("leave_code_room", ({ roomId }) => {
+        if (!roomId || !this.codeRooms.has(roomId)) return;
+        socket.leave(`code_room:${roomId}`);
+        const roomData = this.codeRooms.get(roomId);
+        roomData.users.delete(socket.id);
+        if (roomData.users.size === 0) {
+          this.codeRooms.delete(roomId);
+        } else {
+          this.io.to(`code_room:${roomId}`).emit("code_room_users", {
+            roomId,
+            participants: Array.from(roomData.users.values()),
+          });
+        }
+      });
+
       // Disconnect handling
       socket.on("disconnect", () => {
-        console.log(`[WebSocket] Client disconnected: ${socket.id}`);
+        logger.info(`WebSocket client disconnected`, { socketId: socket.id });
         if (userId && this.onlineUsers.has(userId)) {
           const userSockets = this.onlineUsers.get(userId);
           userSockets.delete(socket.id);
@@ -138,10 +253,25 @@ class SocketGateway {
             this.io.emit("user_status", { userId, status: "OFFLINE" });
           }
         }
+
+        // Clean up from all code rooms
+        for (const [roomId, roomData] of this.codeRooms.entries()) {
+          if (roomData.users && roomData.users.has(socket.id)) {
+            roomData.users.delete(socket.id);
+            if (roomData.users.size === 0) {
+              this.codeRooms.delete(roomId);
+            } else {
+              this.io.to(`code_room:${roomId}`).emit("code_room_users", {
+                roomId,
+                participants: Array.from(roomData.users.values()),
+              });
+            }
+          }
+        }
       });
     });
 
-    console.log("[WebSocket] Gateway successfully initialized.");
+    logger.info("WebSocket Gateway successfully initialized");
     return this.io;
   }
 

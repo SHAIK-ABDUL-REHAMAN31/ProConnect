@@ -1,6 +1,7 @@
 import { postRepository } from "./post.repository.js";
 import Post from "./post.model.js";
 import { NotFoundError, ForbiddenError, BadRequestError } from "../../core/errors/AppError.js";
+import { cacheService } from "../../infrastructure/cache/cacheService.js";
 
 export class PostService {
   async createPost(userId, { body, poll }, file) {
@@ -33,11 +34,23 @@ export class PostService {
       poll: pollData,
     });
 
+    // Write-Through Invalidation: purge all cached feed pages
+    await cacheService.delPattern("cache:feed:*");
+
     return postRepository.findById(post._id);
   }
 
   async getAllPosts(limit = 50, skip = 0) {
-    return postRepository.findAll(limit, skip);
+    const cacheKey = `cache:feed:${limit}:${skip}`;
+    const cached = await cacheService.get(cacheKey);
+
+    if (cached) {
+      return { posts: cached.data, fromCache: true };
+    }
+
+    const posts = await postRepository.findAll(limit, skip);
+    await cacheService.set(cacheKey, posts, 60); // 60s TTL
+    return { posts, fromCache: false };
   }
 
   async deletePost(userId, postId) {
@@ -50,13 +63,22 @@ export class PostService {
       throw new ForbiddenError("You are not authorized to delete this post.");
     }
 
-    return postRepository.deleteById(postId);
+    const result = await postRepository.deleteById(postId);
+
+    // Invalidate cached feed pages
+    await cacheService.delPattern("cache:feed:*");
+
+    return result;
   }
 
   async likePost(postId) {
     const post = await postRepository.findById(postId);
     if (!post) throw new NotFoundError("Post not found.");
-    return postRepository.incrementLikes(postId, 1);
+    const updated = await postRepository.incrementLikes(postId, 1);
+
+    // Invalidate cached feed
+    await cacheService.delPattern("cache:feed:*");
+    return updated;
   }
 
   async dislikePost(postId) {
@@ -64,7 +86,11 @@ export class PostService {
     if (!post) throw new NotFoundError("Post not found.");
     const currentLikes = post.likesCount || 0;
     if (currentLikes <= 0) return post;
-    return postRepository.incrementLikes(postId, -1);
+    const updated = await postRepository.incrementLikes(postId, -1);
+
+    // Invalidate cached feed
+    await cacheService.delPattern("cache:feed:*");
+    return updated;
   }
 
   async getPostsByTopic(tag, limit = 50, skip = 0) {

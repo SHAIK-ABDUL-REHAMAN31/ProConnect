@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { API_BASE_URL } from "../services/apiClient";
 
-const SocketContext = createContext({
+export const SocketContext = createContext({
   socket: null,
   onlineUsers: new Set(),
   unreadCount: 0,
@@ -18,11 +18,13 @@ export const SocketProvider = ({ children }) => {
     if (typeof window === "undefined") return;
 
     const token = localStorage.getItem("token");
-    if (!token) return;
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || API_BASE_URL || "http://localhost:3030";
 
-    const newSocket = io(API_BASE_URL, {
-      auth: { token },
+    const newSocket = io(socketUrl, {
+      auth: token ? { token } : {},
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 15,
     });
 
     newSocket.on("connect", () => {

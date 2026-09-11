@@ -14,8 +14,12 @@ export class ProfileController {
   async getProfileByUsername(req, res, next) {
     try {
       const { username } = req.params;
-      const userProfile = await profileService.getProfileByUsername(username);
-      return ApiResponse.success(res, { userProfile }, "Public profile retrieved.");
+      const result = await profileService.getProfileByUsername(username);
+      const userProfile = result && result.profile !== undefined ? result.profile : result;
+      const fromCache = Boolean(result && result.fromCache);
+
+      res.setHeader("X-Cache", fromCache ? "HIT" : "MISS");
+      return ApiResponse.success(res, { userProfile, fromCache }, "Public profile retrieved.");
     } catch (error) {
       next(error);
     }

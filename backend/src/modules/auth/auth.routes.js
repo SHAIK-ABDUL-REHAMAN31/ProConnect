@@ -10,6 +10,8 @@ const router = Router();
 router.post("/register", authRateLimiter, authController.register);
 router.post("/login", authRateLimiter, authController.login);
 router.post("/google", authRateLimiter, authController.googleAuth);
+router.post("/refresh", authRateLimiter, authController.refreshToken);
+router.post("/logout", authController.logout);
 
 // Email Verification, Username Availability & Real-world DNS checks
 router.get("/check-username", authController.checkUsername);

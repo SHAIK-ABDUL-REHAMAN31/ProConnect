@@ -69,6 +69,14 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    notificationPreferences: {
+      emailNotifications: { type: Boolean, default: true },
+      connectionRequests: { type: Boolean, default: true },
+      messages: { type: Boolean, default: true },
+      postInteractions: { type: Boolean, default: true },
+      jobAlerts: { type: Boolean, default: true },
+      emailDigest: { type: String, enum: ["instant", "daily", "weekly", "off"], default: "daily" },
+    },
   },
   {
     timestamps: true,

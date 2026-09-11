@@ -25,6 +25,7 @@ node_modules/
 # Uploads and temporary files
 backend/uploads/*
 !backend/uploads/.gitkeep
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*

@@ -21,12 +21,106 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Automatic token refresh on 401 with rotation & concurrency lock
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is 401 and request hasn't been retried yet
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/login") &&
+      !originalRequest.url?.includes("/auth/register")
+    ) {
+      if (typeof window === "undefined") {
+        return Promise.reject(error);
+      }
+
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (!storedRefreshToken) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
+          refreshToken: storedRefreshToken,
+        });
+
+        const data = response.data?.data || response.data;
+        const newAccessToken = data.accessToken || data.token;
+        const newRefreshToken = data.refreshToken;
+
+        if (newAccessToken) {
+          localStorage.setItem("token", newAccessToken);
+          if (newRefreshToken) {
+            localStorage.setItem("refreshToken", newRefreshToken);
+          }
+          apiClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          processQueue(null, newAccessToken);
+          return apiClient(originalRequest);
+        }
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        // Clear auth state on refresh failure or reuse security alert
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+          window.location.href = "/login?expired=1";
+        }
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // API endpoint methods
 export const api = {
   // Auth & Email Verification
   login: (credentials) => apiClient.post("/auth/login", credentials),
   register: (userData) => apiClient.post("/auth/register", userData),
   googleAuth: (googleData) => apiClient.post("/auth/google", googleData),
+  refreshToken: (refreshToken) => apiClient.post("/auth/refresh", { refreshToken }),
+  logout: (refreshToken) => apiClient.post("/auth/logout", { refreshToken }),
   checkEmailDns: (email) => apiClient.post("/auth/verify-dns", { email }),
   checkUsername: (username, config) =>
     apiClient.get("/auth/check-username", { params: { username }, ...config }),

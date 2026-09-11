@@ -220,6 +220,91 @@ class EmailService {
       note: "SMTP credentials not configured or failed; OTP logged to backend console.",
     };
   }
+
+  /**
+   * Send an aggregated notification digest email (Daily or Weekly)
+   */
+  async sendDigestEmail(toEmail, name = "Professional", notifications = [], period = "Daily") {
+    if (!this.transporter) {
+      this.initTransporter();
+    }
+    const sender = process.env.SMTP_USER || ENV.SMTP_USER;
+    const fromAddress =
+      process.env.SMTP_FROM ||
+      ENV.SMTP_FROM ||
+      (sender ? `"ProConnect" <${sender}>` : `"ProConnect Notifications" <noreply@proconnect.dev>`);
+
+    const safeName = String(name || "Professional")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    const itemsHtml = notifications
+      .map((item) => {
+        const msg = String(item.message || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const time = new Date(item.createdAt || Date.now()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `
+          <div style="padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 14px; color: #e2e8f0; line-height: 1.5;">${msg}</div>
+            <div style="font-size: 11px; color: #94a3b8; white-space: nowrap; margin-left: 16px;">${time}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your ProConnect ${period} Digest</title>
+</head>
+<body style="background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f1f5f9; margin: 0; padding: 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #111827; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); padding: 28px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 22px; color: #ffffff;">ProConnect ${period} Activity Digest</h1>
+      <p style="margin: 6px 0 0; font-size: 13px; color: rgba(255,255,255,0.85);">Catch up on what happened in your professional network</p>
+    </div>
+    <div style="padding: 24px;">
+      <p style="font-size: 15px; color: #cbd5e1; margin-bottom: 20px;">Hi ${safeName}, here are your latest updates on ProConnect:</p>
+      <div style="background: #1e293b; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 24px;">
+        ${itemsHtml || '<div style="padding: 16px; color: #94a3b8; text-align: center;">No new unread updates.</div>'}
+      </div>
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="https://pro-connect-eta.vercel.app/notifications" style="background: #0a66c2; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">View All Notifications</a>
+      </div>
+    </div>
+    <div style="background: #0d131f; padding: 16px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05);">
+      You received this because your email digest preference is enabled. Manage preferences in Settings.
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    if (this.transporter) {
+      try {
+        const info = await this.transporter.sendMail({
+          from: fromAddress,
+          to: toEmail,
+          subject: `ProConnect ${period} Digest: ${notifications.length} new update${notifications.length === 1 ? "" : "s"}`,
+          text: `You have ${notifications.length} new updates waiting on ProConnect.`,
+          html: htmlContent,
+        });
+        return { success: true, messageId: info.messageId, deliveredVia: "smtp" };
+      } catch (err) {
+        console.error("[EmailService] Failed to send digest email:", err.message);
+      }
+    }
+
+    console.log(`📧 [PROCONNECT DIGEST] Sent to: ${toEmail} (${notifications.length} items)`);
+    return { success: true, deliveredVia: "console_fallback" };
+  }
 }
 
 export const emailService = new EmailService();

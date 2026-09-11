@@ -1,4 +1,5 @@
 import codeCollabService from "./codecollab.service.js";
+import codeRunnerService from "../../infrastructure/runner/codeRunnerService.js";
 import ApiResponse from "../../core/response/apiResponse.js";
 
 class CodeCollabController {
@@ -34,6 +35,22 @@ class CodeCollabController {
     try {
       const session = await codeCollabService.joinSession(req.params.sessionId, req.user.id);
       return ApiResponse.success(res, session, "Joined session successfully");
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async execute(req, res, next) {
+    try {
+      const { language, code, problemId, testCases, isSubmission } = req.body;
+      const result = await codeRunnerService.execute({
+        language,
+        code,
+        problemId,
+        testCases,
+        isSubmission,
+      });
+      return ApiResponse.success(res, result, "Code executed successfully");
     } catch (err) {
       next(err);
     }

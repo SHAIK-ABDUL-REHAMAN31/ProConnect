@@ -332,44 +332,7 @@ export default function HomePage() {
 
       <DashBoardLayout requireAuth={false}>
         <div className={styles.feedWrapper}>
-          {/* ================= 1. HERO PROMO BANNER ================= */}
-          <div className={styles.heroBanner}>
-            <div className={styles.heroContent}>
-              <span className={styles.heroBadge}>Build. Learn. Grow.</span>
-              <h1 className={styles.heroHeadline}>
-                Connect with professionals.<br />
-                Learn new skills. Grow together.
-              </h1>
-              <p className={styles.heroSubtext}>
-                Join the community of students and professionals building the future together.
-              </p>
-              <div className={styles.heroButtonGroup}>
-                <button
-                  className={styles.heroPrimaryBtn}
-                  onClick={() => router.push("/myConnections")}
-                >
-                  Expand Network
-                </button>
-                <button
-                  className={styles.heroSecondaryBtn}
-                  onClick={() => router.push("/learning")}
-                >
-                  Explore Courses
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.heroImageContainer}>
-              <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=700&auto=format&fit=crop&q=80"
-                alt="Professionals collaborating"
-                className={styles.heroImg}
-              />
-              <div className={styles.heroImgOverlay}></div>
-            </div>
-          </div>
-
-          {/* ================= 2. POST COMPOSER ================= */}
+          {/* ================= POST COMPOSER ================= */}
           <div className={styles.composerCard}>
             <div className={styles.composerTopRow}>
               <img

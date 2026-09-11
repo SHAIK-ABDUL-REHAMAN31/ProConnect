@@ -8,5 +8,6 @@ router.post("/sessions", authenticate, codeCollabController.create);
 router.get("/sessions/:sessionId", codeCollabController.getSession);
 router.put("/sessions/:sessionId", authenticate, codeCollabController.syncCode);
 router.post("/sessions/:sessionId/join", authenticate, codeCollabController.joinSession);
+router.post("/execute", codeCollabController.execute);
 
 export default router;
